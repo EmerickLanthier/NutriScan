@@ -57,7 +57,7 @@ nutriscan-frontend/
 └── fichiers de configuration
 ```
 
-### backendà
+### backend
 
 ```
 nutriscan-backend/
