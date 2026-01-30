@@ -3,6 +3,7 @@
 
 ## 📖 Description
 
+Nutriscan est une application mobile développé en React.js qui permet aux utilisateurs de scanner les codes-barres des produits alimentaires afin d'obtenir instantanément leur score nutritionnel et des informations détaillées pour faire des choix de consommation plus sains.
 **NutriScan** Nutriscan est une application mobile développé en React.js qui permet aux utilisateurs de scanner les codes-barres des produits alimentaires afin d'obtenir instantanément leur score nutritionnel et des informations détaillées pour faire des choix de consommation plus sains.
 
 ### ✨ Fonctionnalités principales
@@ -57,7 +58,7 @@ nutriscan-frontend/
 └── fichiers de configuration
 ```
 
-### backend
+### backendà
 
 ```
 nutriscan-backend/
