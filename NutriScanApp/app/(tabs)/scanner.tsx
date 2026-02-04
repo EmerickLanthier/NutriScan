@@ -1,10 +1,16 @@
-import React, {useState, useEffect, useRef} from 'react';
-import {View, Text, StyleSheet, Button, Alert} from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Camera, CameraView, BarcodeScanningResult } from 'expo-camera';
+import { fetchProduct, ProductData } from '@/services/openFoodFacts';
+import ProductDetailModal from '@/components/ProductDetailModal'; //pour la modale
 
 export default function ScannerScreen() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-    const [scanned, setScanned] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [scannedProduct, setScannedProduct] = useState<ProductData | null>(null);
+
     const isProcessing = useRef(false);
 
     useEffect(() => {
@@ -14,83 +20,106 @@ export default function ScannerScreen() {
         })();
     }, []);
 
-    const handleBarCodeScanned = ({ data }: BarcodeScanningResult) =>{
-        if (isProcessing.current) {
-            return;
-        }
+    const handleBarCodeScanned = async ({ data }: BarcodeScanningResult) => {
+        if (isProcessing.current || modalVisible) return;
 
         isProcessing.current = true;
+        setIsLoading(true);
 
-        Alert.alert(
-            "Code Scanné",
-            `Valeur : ${data}`,
-            [
-                {
-                    text: "OK",
-                    onPress: () => {
-                        setTimeout(() => {
-                            isProcessing.current = false;
-                        }, 500);
-                    }
-                }
-            ]
-        );
+        try {
+            const product = await fetchProduct(data);
+            if (product) {
+                setScannedProduct(product);
+                setModalVisible(true);
+            } else {
+                Alert.alert("Introuvable", "Produit non trouvé sur OpenFoodFacts", [
+                    { text: "OK", onPress: resetScannerLock }
+                ]);
+            }
+        } catch (error) {
+            Alert.alert("Erreur", "Vérifiez votre connexion internet", [
+                { text: "OK", onPress: resetScannerLock }
+            ]);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    if (hasPermission === null) return <View />;
-    if (hasPermission === false) return <Text>Pas de caméra</Text>;
+    const closeModal = () => {
+        setModalVisible(false);
+        setScannedProduct(null);
+        resetScannerLock();
+    };
+
+    const resetScannerLock = () => {
+        setTimeout(() => {
+            isProcessing.current = false;
+        }, 1000);
+    };
+
+    if (hasPermission === null) return <View style={styles.container} />;
+    if (hasPermission === false) return <Text>Pas d'accès à la caméra</Text>;
 
     return (
         <View style={styles.container}>
+            {/* 1. LA CAMÉRA */}
+            <CameraView
+                style={StyleSheet.absoluteFillObject}
+                onBarcodeScanned={handleBarCodeScanned}
+            />
 
-            <View style={styles.header}>
-                <Text style={styles.title}>Scanner</Text>
-            </View>
+            {isLoading && (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" color="#fff" />
+                    <Text style={styles.loadingText}>Analyse...</Text>
+                </View>
+            )}
 
-            <View style={styles.cameraContainer}>
-                <CameraView
-                    style={styles.camera}
-                    onBarcodeScanned={handleBarCodeScanned}
-                />
-                <View style={styles.laserLine} />
-            </View>
+            {!modalVisible && !isLoading && (
+                <View style={styles.overlayUI}>
+                    <View style={styles.scanFrame} />
+                    <Text style={styles.instructionText}>Visez un code-barres</Text>
+                </View>
+            )}
 
-            <View style={styles.footer}>
-                <Text style={styles.instruction}>
-                    Vise un code-barres pour scanner
-                </Text>
-            </View>
-
+            <ProductDetailModal
+                visible={modalVisible}
+                product={scannedProduct}
+                onClose={closeModal}
+            />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f2f2f2',
-        alignItems: 'center',
+    container: { flex: 1, backgroundColor: '#000' },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.7)',
         justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 20
     },
-    header: { marginBottom: 30 },
-    title: { fontSize: 24, fontWeight: 'bold' },
-    cameraContainer: {
-        width: 300,
-        height: 150,
-        overflow: 'hidden',
-        borderRadius: 20,
+    loadingText: { color: 'white', marginTop: 10, fontWeight: 'bold' },
+    overlayUI: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10
+    },
+    scanFrame: {
+        width: 250,
+        height: 250,
         borderWidth: 2,
-        borderColor: '#000',
+        borderColor: 'white',
+        borderRadius: 20
     },
-    camera: { flex: 1 },
-    laserLine: {
-        position: 'absolute',
-        top: '50%',
-        width: '100%',
-        height: 2,
-        backgroundColor: 'red',
-        opacity: 0.6,
+    instructionText: {
+        color: 'white',
+        fontSize: 16,
+        marginTop: 20,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        padding: 10,
+        borderRadius: 5
     },
-    footer: { marginTop: 30 },
-    instruction: { color: '#666' }
 });
