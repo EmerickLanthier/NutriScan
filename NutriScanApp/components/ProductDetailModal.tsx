@@ -1,4 +1,9 @@
 import React from 'react';
+
+import { extractProductQuality } from "@/services/productQuality";
+import NutriScoreBadge from "@/components/NutriScoreBadge";
+import type { NutriScoreLetter } from "@/services/productQuality";
+
 import {
     View,
     Text,
@@ -20,6 +25,14 @@ interface ProductDetailModalProps {
 export default function ProductDetailModal({ visible, product, onClose }: ProductDetailModalProps) {
     //  si pas de produit, on n'affiche rien
     if (!product) return null;
+
+const raw = String(product.nutriscore ?? "").toLowerCase();
+
+const score: NutriScoreLetter =
+  raw === "a" || raw === "b" || raw === "c" || raw === "d" || raw === "e"
+    ? (raw as NutriScoreLetter)
+    : "unknown";
+
 
     return (
         <Modal
@@ -52,6 +65,11 @@ export default function ProductDetailModal({ visible, product, onClose }: Produc
                                 {product.quantity ? (
                                     <Text style={styles.quantityText}>Quantité : {product.quantity}</Text>
                                 ) : null}
+                            </View>
+
+                            <View style={{ marginTop: 8 }}>
+                                <NutriScoreBadge score={score} />
+
                             </View>
                         </View>
 
