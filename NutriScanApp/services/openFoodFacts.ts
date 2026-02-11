@@ -16,6 +16,7 @@ export interface ProductData {
     labels: string[];
     nutriscore: string;
     nutritionRows: NutritionRowData[];
+    categoryTag: string | null;
 }
 
 export const fetchProduct = async (barcode: string): Promise<ProductData | null> => {
@@ -72,6 +73,10 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
         if (n['iron_100g']) addRow('iron', 'Fer', 'mg');
         if (n['vitamin-c_100g']) addRow('vitamin-c', 'Vitamine C', 'mg');
 
+        const categoryTag: string | null =
+        Array.isArray(p.categories_tags)
+        ? (p.categories_tags.find((t: any) => typeof t === "string" && t.startsWith("en:")) ?? null)
+        : null;
 
         return {
             barcode: barcode,
@@ -82,6 +87,7 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
             labels: p.labels_tags || [],
             nutriscore: p.nutriscore_grade || "?",
             nutritionRows: rows,
+            categoryTag
         };
 
     } catch (error) {

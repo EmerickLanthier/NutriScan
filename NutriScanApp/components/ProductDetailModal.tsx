@@ -1,5 +1,8 @@
 import React from 'react';
 
+import { fetchHealthyAlternatives, AlternativeProduct } from "@/services/healthyAlternatives";
+import { useEffect, useState } from "react";
+import HealthWarning from "@/components/HealthWarning";
 import { extractProductQuality } from "@/services/productQuality";
 import NutriScoreBadge from "@/components/NutriScoreBadge";
 import type { NutriScoreLetter } from "@/services/productQuality";
@@ -22,16 +25,59 @@ interface ProductDetailModalProps {
     onClose: () => void;
 }
 
-export default function ProductDetailModal({ visible, product, onClose }: ProductDetailModalProps) {
-    //  si pas de produit, on n'affiche rien
-    if (!product) return null;
+export default function ProductDetailModal({
+  visible,
+  product,
+  onClose,
+}: ProductDetailModalProps) {
 
-const raw = String(product.nutriscore ?? "").toLowerCase();
+  // ⚠️ Hooks toujours en premier (règle React)
+  const raw = String(product?.nutriscore ?? "").toLowerCase();
 
-const score: NutriScoreLetter =
-  raw === "a" || raw === "b" || raw === "c" || raw === "d" || raw === "e"
-    ? (raw as NutriScoreLetter)
-    : "unknown";
+  const score: NutriScoreLetter =
+    raw === "a" || raw === "b" || raw === "c" || raw === "d" || raw === "e"
+      ? (raw as NutriScoreLetter)
+      : "unknown";
+
+  const [alternatives, setAlternatives] = useState<AlternativeProduct[]>([]);
+  const [loadingAlt, setLoadingAlt] = useState(false);
+
+useEffect(() => {
+  if (!product) {
+    setAlternatives([]);
+    setLoadingAlt(false);
+    return;
+  }
+
+  if (score !== "d" && score !== "e") {
+    setAlternatives([]);
+    return;
+  }
+
+  const load = async () => {
+    try {
+      setLoadingAlt(true);
+
+      const result = await fetchHealthyAlternatives({
+        categoryTag: product.categoryTag,
+        queryTextFallback: product.name ?? "produit",
+      });
+
+      setAlternatives(result);
+    } catch (e) {
+      console.log("Erreur alternatives:", e);
+      setAlternatives([]);
+    } finally {
+      setLoadingAlt(false);
+    }
+  };
+
+  load();
+}, [product, product?.name, product?.categoryTag, score]);
+
+
+  // ⚠️ Le return null DOIT être ici (après les hooks)
+  if (!product) return null;
 
 
     return (
@@ -60,17 +106,18 @@ const score: NutriScoreLetter =
                             )}
 
                             <View style={styles.headerTexts}>
-                                <Text style={styles.productName}>{product.name}</Text>
-                                <Text style={styles.brandName}>{product.brands}</Text>
-                                {product.quantity ? (
-                                    <Text style={styles.quantityText}>Quantité : {product.quantity}</Text>
-                                ) : null}
-                            </View>
+                            <Text style={styles.productName}>{product.name}</Text>
+                            <Text style={styles.brandName}>{product.brands}</Text>
+                            {product.quantity ? (
+                                <Text style={styles.quantityText}>Quantité : {product.quantity}</Text>
+                            ) : null}
 
                             <View style={{ marginTop: 8 }}>
                                 <NutriScoreBadge score={score} />
-
+                                <HealthWarning score={score} />
                             </View>
+                            </View>
+
                         </View>
 
                         {product.labels && product.labels.length > 0 && (
@@ -106,6 +153,44 @@ const score: NutriScoreLetter =
                                 <Text style={styles.emptyText}>Aucune donnée nutritionnelle disponible.</Text>
                             )}
                         </View>
+                        {(score === "d" || score === "e") && (
+              <View style={styles.altSection}>
+                <Text style={styles.sectionTitle}>Alternatives plus saines</Text>
+
+                {loadingAlt && (
+                  <Text style={styles.smallText}>Recherche d’alternatives…</Text>
+                )}
+
+                {!loadingAlt && alternatives.length === 0 && (
+                  <Text style={styles.smallText}>Aucune alternative trouvée.</Text>
+                )}
+
+                {alternatives.map((alt) => (
+                  <View key={alt.code} style={styles.altCard}>
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      {alt.imageUrl ? (
+                        <Image
+                          source={{ uri: alt.imageUrl }}
+                          style={styles.altImage}
+                        />
+                      ) : (
+                        <View style={[styles.altImage, styles.placeholderImage]}>
+                          <Text style={{ color: "#888", fontSize: 12 }}>No Img</Text>
+                        </View>
+                      )}
+
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.altTitle}>{alt.name}</Text>
+                        {!!alt.brand && <Text style={styles.smallText}>{alt.brand}</Text>}
+                        <Text style={styles.smallText}>
+                          NutriScore: {alt.nutriScore.toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
 
                     </ScrollView>
                 </View>
@@ -288,4 +373,33 @@ const styles = StyleSheet.create({
         fontWeight: '900',
         color: '#000',
     },
+    // Alternatives
+  altSection: {
+    marginBottom: 20,
+  },
+  altCard: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+    backgroundColor: "#fff",
+  },
+  altImage: {
+    width: 60,
+    height: 60,
+    resizeMode: "contain",
+    borderRadius: 10,
+    backgroundColor: "#f9f9f9",
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  altTitle: {
+    fontWeight: "800",
+    color: "#000",
+  },
+  smallText: {
+    color: "#666",
+    marginTop: 4,
+  },
 });
