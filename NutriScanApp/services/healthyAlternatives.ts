@@ -7,6 +7,7 @@ export type AlternativeProduct = {
   brand?: string;
   nutriScore: NutriScoreLetter;
   imageUrl?: string;
+  categories?: string[];
 };
 
 export async function fetchHealthyAlternatives(params: {
@@ -43,6 +44,7 @@ export async function fetchHealthyAlternatives(params: {
       "nutriscore_grade",
       "nutrition_grade_fr",
       "image_front_small_url",
+      "categories_tags"
     ].join(",")
   );
 
@@ -71,14 +73,18 @@ export async function fetchHealthyAlternatives(params: {
         imageUrl: p?.image_front_small_url
           ? String(p.image_front_small_url)
           : undefined,
+            categories: Array.isArray(p?.categories_tags) ? p.categories_tags : [],
       };
     })
     // Filtrer les produits avec NutriScore A/B/C
     .filter(
       (p: AlternativeProduct) =>
         p.code &&
-        (p.nutriScore === "a" || p.nutriScore === "b" || p.nutriScore === "c")
-    );
+        (p.nutriScore === "a" || p.nutriScore === "b" || p.nutriScore === "c")&&
+        !p.categories?.some(cat =>
+        cat.includes("water") || cat.includes("waters") || cat.includes("eaux") || cat.includes("eau")
+      )
+    )
 
   // Prioriser A puis B puis C
   const rank = (s: NutriScoreLetter) => (s === "a" ? 0 : s === "b" ? 1 : 2);
