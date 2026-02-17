@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Camera, CameraView, BarcodeScanningResult } from 'expo-camera';
 import { fetchProduct, ProductData } from '@/services/openFoodFacts';
 import ProductDetailModal from '@/components/ProductDetailModal'; //pour la modale
+import { useIsFocused } from '@react-navigation/native';
 
 export default function ScannerScreen() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -11,6 +12,7 @@ export default function ScannerScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [scannedProduct, setScannedProduct] = useState<ProductData | null>(null);
 
+    const isFocused = useIsFocused();
     const isProcessing = useRef(false);
 
     useEffect(() => {
@@ -59,6 +61,10 @@ export default function ScannerScreen() {
 
     if (hasPermission === null) return <View style={styles.container} />;
     if (hasPermission === false) return <Text>Pas d'accès à la caméra</Text>;
+
+    if (!isFocused) {
+        return <View style={styles.container} />;
+    }
 
     return (
         <View style={styles.container}>
