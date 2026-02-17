@@ -10,9 +10,10 @@ export type AlternativeProduct = {
 };
 
 export async function fetchHealthyAlternatives(params: {
-  categoryTag?: string | null;      
-  queryTextFallback?: string;       
+  categoryTag?: string | null;
+  queryTextFallback?: string;
   pageSize?: number;
+  scoreThreshold?: NutriScoreLetter;  
 }): Promise<AlternativeProduct[]> {
   const pageSize = params.pageSize ?? 20;
 
@@ -22,14 +23,17 @@ export async function fetchHealthyAlternatives(params: {
   url.searchParams.set("json", "1");
   url.searchParams.set("page_size", String(pageSize));
 
+  // Recherche par catégorie
   if (params.categoryTag) {
     url.searchParams.set("tagtype_0", "categories");
     url.searchParams.set("tag_contains_0", "contains");
     url.searchParams.set("tag_0", params.categoryTag);
   } else {
+    // Fallback sur nom produit
     url.searchParams.set("search_terms", params.queryTextFallback ?? "produit");
   }
 
+  // Ajouter des champs pertinents
   url.searchParams.set(
     "fields",
     [
@@ -69,16 +73,18 @@ export async function fetchHealthyAlternatives(params: {
           : undefined,
       };
     })
+    // Filtrer les produits avec NutriScore A/B/C
     .filter(
       (p: AlternativeProduct) =>
         p.code &&
         (p.nutriScore === "a" || p.nutriScore === "b" || p.nutriScore === "c")
     );
 
-  // Priorise A puis B puis C
+  // Prioriser A puis B puis C
   const rank = (s: NutriScoreLetter) => (s === "a" ? 0 : s === "b" ? 1 : 2);
   mapped.sort((x, y) => rank(x.nutriScore) - rank(y.nutriScore));
 
+  // Dédupe par nom de produit et marque
   const seen = new Set<string>();
   return mapped.filter((p: AlternativeProduct) => {
     const key = `${p.name}|${p.brand ?? ""}`.toLowerCase();

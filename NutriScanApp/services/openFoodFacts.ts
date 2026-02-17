@@ -17,6 +17,7 @@ export interface ProductData {
     nutriscore: string;
     nutritionRows: NutritionRowData[];
     categoryTag: string | null;
+    
 }
 
 export const fetchProduct = async (barcode: string): Promise<ProductData | null> => {
