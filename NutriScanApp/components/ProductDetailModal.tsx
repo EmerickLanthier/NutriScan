@@ -1,11 +1,12 @@
 import React from 'react';
-
+import { fetchProduct} from "@/services/openFoodFacts";
 import { fetchHealthyAlternatives, AlternativeProduct } from "@/services/healthyAlternatives";
 import { useEffect, useState } from "react";
 import HealthWarning from "@/components/HealthWarning";
 import { extractProductQuality } from "@/services/productQuality";
 import NutriScoreBadge from "@/components/NutriScoreBadge";
 import type { NutriScoreLetter } from "@/services/productQuality";
+
 
 import {
     View,
@@ -23,6 +24,7 @@ interface ProductDetailModalProps {
     visible: boolean;
     product: ProductData | null;
     onClose: () => void;
+    level?: "low" | "moderate" | "high" | null;
 }
 
 export default function ProductDetailModal({
@@ -31,7 +33,6 @@ export default function ProductDetailModal({
   onClose,
 }: ProductDetailModalProps) {
 
-  // ⚠️ Hooks toujours en premier (règle React)
   const raw = String(product?.nutriscore ?? "").toLowerCase();
 
   const score: NutriScoreLetter =
@@ -41,6 +42,30 @@ export default function ProductDetailModal({
 
   const [alternatives, setAlternatives] = useState<AlternativeProduct[]>([]);
   const [loadingAlt, setLoadingAlt] = useState(false);
+  const [altModalVisible, setAltModalVisible] = useState(false);
+  const [altProduct, setAltProduct] = useState<ProductData | null>(null);
+  const [loadingAltProduct, setLoadingAltProduct] = useState(false);
+
+  const openAlternative = async (barcode: string) => {
+  try {
+    setLoadingAltProduct(true);
+    const p = await fetchProduct(barcode);
+    setAltProduct(p);
+    setAltModalVisible(true);
+  } catch (e) {
+    console.log("Erreur chargement alternative:", e);
+    setAltProduct(null);
+    setAltModalVisible(true);
+  } finally {
+    setLoadingAltProduct(false);
+  }
+};
+
+const closeAltModal = () => {
+  setAltModalVisible(false);
+  setAltProduct(null);
+};
+
 
 useEffect(() => {
   if (!product) {
@@ -75,12 +100,10 @@ useEffect(() => {
   load();
 }, [product, product?.name, product?.categoryTag, score]);
 
-
-  // ⚠️ Le return null DOIT être ici (après les hooks)
   if (!product) return null;
 
-
     return (
+        <>
         <Modal
             animationType="slide"
             transparent={true}
@@ -144,6 +167,7 @@ useEffect(() => {
                                         unit={row.unit}
                                         bold={row.bold}
                                         subItem={row.subItem}
+                                        level={row.level}
                                         last={index === product.nutritionRows.length - 1}
                                     />
                                 ))}
@@ -166,28 +190,31 @@ useEffect(() => {
                 )}
 
                 {alternatives.map((alt) => (
-                  <View key={alt.code} style={styles.altCard}>
+                <TouchableOpacity
+                    key={alt.code}
+                    style={styles.altCard}
+                    activeOpacity={0.85}
+                    onPress={() => openAlternative(alt.code)}
+                >
+                    {/* le contenu interne ne change pas */}
                     <View style={{ flexDirection: "row", gap: 10 }}>
-                      {alt.imageUrl ? (
-                        <Image
-                          source={{ uri: alt.imageUrl }}
-                          style={styles.altImage}
-                        />
-                      ) : (
+                    {alt.imageUrl ? (
+                        <Image source={{ uri: alt.imageUrl }} style={styles.altImage} />
+                    ) : (
                         <View style={[styles.altImage, styles.placeholderImage]}>
-                          <Text style={{ color: "#888", fontSize: 12 }}>No Img</Text>
+                        <Text style={{ color: "#888", fontSize: 12 }}>No Img</Text>
                         </View>
-                      )}
+                    )}
 
-                      <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1 }}>
                         <Text style={styles.altTitle}>{alt.name}</Text>
                         {!!alt.brand && <Text style={styles.smallText}>{alt.brand}</Text>}
                         <Text style={styles.smallText}>
-                          NutriScore: {alt.nutriScore.toUpperCase()}
+                        NutriScore: {alt.nutriScore.toUpperCase()}
                         </Text>
-                      </View>
                     </View>
-                  </View>
+                    </View>
+                </TouchableOpacity>
                 ))}
               </View>
             )}
@@ -196,6 +223,93 @@ useEffect(() => {
                 </View>
             </View>
         </Modal>
+           <Modal
+      animationType="slide"
+      transparent={true}
+      visible={altModalVisible}
+      onRequestClose={closeAltModal}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <TouchableOpacity style={styles.closeButton} onPress={closeAltModal}>
+            <IconSymbol name="xmark.circle.fill" size={30} color="#333" />
+          </TouchableOpacity>
+
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+            <Text style={styles.sectionTitle}>Détails de l’alternative</Text>
+
+            {loadingAltProduct && <Text style={styles.smallText}>Chargement…</Text>}
+
+            {!loadingAltProduct && !altProduct && (
+              <Text style={styles.smallText}>Impossible de charger ce produit.</Text>
+            )}
+
+            {altProduct && (() => {
+  const rawAlt = String(altProduct.nutriscore ?? "").toLowerCase();
+  const altScore: NutriScoreLetter =
+    rawAlt === "a" || rawAlt === "b" || rawAlt === "c" || rawAlt === "d" || rawAlt === "e"
+      ? (rawAlt as NutriScoreLetter)
+      : "unknown";
+
+  return (
+    <>
+      {/* Header alternative */}
+      <View style={styles.altPopupHeader}>
+        {altProduct.image ? (
+          <Image source={{ uri: altProduct.image }} style={styles.altPopupImage} />
+        ) : (
+          <View style={[styles.altPopupImage, styles.placeholderImage]}>
+            <Text style={{ color: "#888", fontSize: 12 }}>No Image</Text>
+          </View>
+        )}
+
+        <View style={{ flex: 1 }}>
+          <Text style={styles.altPopupTitle}>{altProduct.name}</Text>
+          <Text style={styles.smallText}>{altProduct.brands}</Text>
+
+          <View style={{ marginTop: 8 }}>
+            <NutriScoreBadge score={altScore} />
+          </View>
+
+          <Text style={[styles.smallText, { marginTop: 6 }]}>
+            Barcode : {altProduct.barcode}
+          </Text>
+        </View>
+      </View>
+
+      {/* Nutrition */}
+      <Text style={[styles.sectionTitle, { marginTop: 12 }]}>
+        Valeurs Nutritionnelles (pour 100g)
+      </Text>
+
+      <View style={styles.nutritionTable}>
+        {altProduct.nutritionRows.map((row, index) => (
+          <NutritionRow
+            key={index}
+            label={row.label}
+            value={row.value}
+            unit={row.unit}
+            bold={row.bold}
+            subItem={row.subItem}
+            level={row.level}
+            last={index === altProduct.nutritionRows.length - 1}
+          />
+        ))}
+      </View>
+
+      {altProduct.nutritionRows.length === 0 && (
+        <Text style={styles.smallText}>Aucune donnée nutritionnelle disponible.</Text>
+      )}
+    </>
+  );
+})()}
+
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  </>
+        
     );
 }
 
@@ -206,14 +320,26 @@ interface NutritionRowProps {
     bold?: boolean;
     subItem?: boolean;
     last?: boolean;
+    level?: "low" | "moderate" | "high" | null;
 }
 
-const NutritionRow = ({ label, value, unit, bold, subItem, last }: NutritionRowProps) => (
-    <View style={[
+const levelStyle = (level?: "low" | "moderate" | "high" | null) => {
+  if (level === "high") return styles.levelHigh;
+  if (level === "moderate") return styles.levelModerate;
+  if (level === "low") return styles.levelLow;
+  return null;
+};
+
+const NutritionRow = ({ label, value, unit, bold, subItem, last, level }: NutritionRowProps) => (
+        <View style={[
         styles.nutriRow,
+        level === "high" && styles.levelHigh,
+        level === "moderate" && styles.levelModerate,
+        level === "low" && styles.levelLow,
         last && styles.nutriRowLast,
         subItem && styles.nutriRowSub
-    ]}>
+        ]}>
+
         <Text style={[styles.nutriLabel, bold && styles.bold]}>
             {label}
         </Text>
@@ -402,4 +528,33 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 4,
   },
+  altPopupHeader: {
+  flexDirection: "row",
+  gap: 12,
+  alignItems: "flex-start",
+},
+altPopupImage: {
+  width: 80,
+  height: 80,
+  resizeMode: "contain",
+  borderRadius: 10,
+  backgroundColor: "#f9f9f9",
+  borderWidth: 1,
+  borderColor: "#eee",
+},
+altPopupTitle: {
+  fontSize: 18,
+  fontWeight: "900",
+  color: "#000",
+},
+levelHigh: {
+  backgroundColor: "#ffe5e5",
+},
+levelModerate: {
+  backgroundColor: "#fff2d9",
+},
+levelLow: {
+  backgroundColor: "#e7f7ea",
+},
+
 });
