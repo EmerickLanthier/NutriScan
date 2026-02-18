@@ -68,11 +68,12 @@ export default function ScannerScreen() {
 
     return (
         <View style={styles.container}>
-            {/* 1. LA CAMÉRA */}
-            <CameraView
-                style={StyleSheet.absoluteFillObject}
-                onBarcodeScanned={handleBarCodeScanned}
-            />
+            {!modalVisible && (
+                <CameraView
+                    style={StyleSheet.absoluteFillObject}
+                    onBarcodeScanned={handleBarCodeScanned}
+                />
+            )}
 
             {isLoading && (
                 <View style={styles.loadingOverlay}>
