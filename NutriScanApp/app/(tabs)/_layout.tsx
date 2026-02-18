@@ -16,7 +16,14 @@ export default function TabLayout() {
                 tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].icon,
                 tabBarActiveBackgroundColor: Colors[colorScheme ?? 'light'].tabBarBackgroundColor,
                 tabBarInactiveBackgroundColor: Colors[colorScheme ?? 'light'].tabBarBackgroundColor,
-
+                tabBarStyle: {
+                    backgroundColor: Colors[colorScheme ?? 'light'].safeAreaBackground,
+                    borderTopWidth: 0,
+                    elevation: 0,
+                },
+                tabBarItemStyle: {
+                    backgroundColor: 'transparent', // Empêche le changement de fond
+                },
 
                 headerShown: false,
                 tabBarButton: HapticTab,
