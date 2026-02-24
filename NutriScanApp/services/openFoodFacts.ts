@@ -5,6 +5,7 @@ export interface NutritionRowData {
     unit: string;
     bold?: boolean;
     subItem?: boolean;
+    level?: "low" | "moderate" | "high" | null;
 }
 
 export interface ProductData {
@@ -16,6 +17,8 @@ export interface ProductData {
     labels: string[];
     nutriscore: string;
     nutritionRows: NutritionRowData[];
+    categoryTag: string | null;
+    
 }
 
 export const fetchProduct = async (barcode: string): Promise<ProductData | null> => {
@@ -29,7 +32,7 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
 
         const p = data.product;
         const n = p.nutriments || {};
-
+        const levels = p.nutrient_levels || {}; 
         const rows: NutritionRowData[] = [];
 
         // Fonction util pour add un row si valeur existe
@@ -46,7 +49,8 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
                     value: (val || 0).toFixed(key === 'energy-kcal' ? 0 : 1), // Pas de décimale pour les calories
                     unit,
                     bold: options.bold,
-                    subItem: options.subItem
+                    subItem: options.subItem,
+                    level: (levels[key] as "low" | "moderate" | "high") ?? null
                 });
             }
         };
@@ -72,6 +76,10 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
         if (n['iron_100g']) addRow('iron', 'Fer', 'mg');
         if (n['vitamin-c_100g']) addRow('vitamin-c', 'Vitamine C', 'mg');
 
+        const categoryTag: string | null =
+        Array.isArray(p.categories_tags)
+        ? (p.categories_tags.find((t: any) => typeof t === "string" && t.startsWith("en:")) ?? null)
+        : null;
 
         return {
             barcode: barcode,
@@ -82,6 +90,7 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
             labels: p.labels_tags || [],
             nutriscore: p.nutriscore_grade || "?",
             nutritionRows: rows,
+            categoryTag
         };
 
     } catch (error) {
