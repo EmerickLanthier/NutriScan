@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Remplacez par votre chaîne de connexion Atlas
 const uri = process.env.MONGO_URI;
 
 mongoose.connect(uri)
