@@ -1,291 +1,490 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from "react-native";
 
-import { extractProductQuality } from "@/services/productQuality";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import NutriScoreBadge from "@/components/NutriScoreBadge";
+import HealthWarning from "@/components/HealthWarning";
+
+import { fetchProduct, ProductData } from "@/services/openFoodFacts";
+import { fetchHealthyAlternatives, AlternativeProduct } from "@/services/healthyAlternatives";
 import type { NutriScoreLetter } from "@/services/productQuality";
 
-import {
-    View,
-    Text,
-    StyleSheet,
-    Modal,
-    TouchableOpacity,
-    Image,
-    ScrollView
-} from 'react-native';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { ProductData } from '@/services/openFoodFacts';
-
 interface ProductDetailModalProps {
-    visible: boolean;
-    product: ProductData | null;
-    onClose: () => void;
+  visible: boolean;
+  product: ProductData | null;
+  onClose: () => void;
+  level?: "low" | "moderate" | "high" | null;
 }
 
-export default function ProductDetailModal({ visible, product, onClose }: ProductDetailModalProps) {
-    //  si pas de produit, on n'affiche rien
-    if (!product) return null;
+export default function ProductDetailModal({
+  visible,
+  product,
+  onClose,
+}: ProductDetailModalProps) {
+  const [alternatives, setAlternatives] = useState<AlternativeProduct[]>([]);
+  const [loadingAlt, setLoadingAlt] = useState(false);
 
-const raw = String(product.nutriscore ?? "").toLowerCase();
+  // ✅ remplace le “2e modal” par une navigation interne
+  const [displayProduct, setDisplayProduct] = useState<ProductData | null>(product);
+  const [history, setHistory] = useState<ProductData[]>([]);
+  const [loadingDisplayProduct, setLoadingDisplayProduct] = useState(false);
 
-const score: NutriScoreLetter =
-  raw === "a" || raw === "b" || raw === "c" || raw === "d" || raw === "e"
-    ? (raw as NutriScoreLetter)
-    : "unknown";
+  // reset quand on ouvre/ferme ou quand le product parent change
+  useEffect(() => {
+    if (!visible) {
+      setDisplayProduct(product);
+      setHistory([]);
+      setAlternatives([]);
+      setLoadingAlt(false);
+      setLoadingDisplayProduct(false);
+      return;
+    }
+    setDisplayProduct(product);
+    setHistory([]);
+  }, [visible, product]);
 
+  const score: NutriScoreLetter = useMemo(() => {
+    const raw = String(displayProduct?.nutriscore ?? "").toLowerCase();
+    return raw === "a" || raw === "b" || raw === "c" || raw === "d" || raw === "e"
+      ? (raw as NutriScoreLetter)
+      : "unknown";
+  }, [displayProduct?.nutriscore]);
 
-    return (
-        <Modal
-            animationType="slide"
-            transparent={true}
-            visible={visible}
-            onRequestClose={onClose}
-        >
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
+  // load alternatives (uniquement si D/E)
+  useEffect(() => {
+    if (!displayProduct) {
+      setAlternatives([]);
+      setLoadingAlt(false);
+      return;
+    }
 
-                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                        <IconSymbol name="xmark.circle.fill" size={30} color="#333" />
-                    </TouchableOpacity>
+    if (score !== "d" && score !== "e") {
+      setAlternatives([]);
+      return;
+    }
 
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+    const load = async () => {
+      try {
+        setLoadingAlt(true);
 
-                        <View style={styles.headerSection}>
-                            {product.image ? (
-                                <Image source={{ uri: product.image }} style={styles.productImage} />
-                            ) : (
-                                <View style={[styles.productImage, styles.placeholderImage]}>
-                                    <Text style={{ color: '#888' }}>No Image</Text>
-                                </View>
-                            )}
+        const result = await fetchHealthyAlternatives({
+          categoryTag: displayProduct.categoryTag,
+          queryTextFallback: displayProduct.name ?? "produit",
+        });
 
-                            <View style={styles.headerTexts}>
-                                <Text style={styles.productName}>{product.name}</Text>
-                                <Text style={styles.brandName}>{product.brands}</Text>
-                                {product.quantity ? (
-                                    <Text style={styles.quantityText}>Quantité : {product.quantity}</Text>
-                                ) : null}
-                            </View>
+        setAlternatives(result);
+      } catch (e) {
+        console.log("Erreur alternatives:", e);
+        setAlternatives([]);
+      } finally {
+        setLoadingAlt(false);
+      }
+    };
 
-                            <View style={{ marginTop: 8 }}>
-                                <NutriScoreBadge score={score} />
+    load();
+  }, [displayProduct?.barcode, displayProduct?.name, displayProduct?.categoryTag, score]);
 
-                            </View>
-                        </View>
+  const handleClose = () => {
+    // reset local state
+    setDisplayProduct(product);
+    setHistory([]);
+    setAlternatives([]);
+    setLoadingAlt(false);
+    setLoadingDisplayProduct(false);
+    onClose();
+  };
 
-                        {product.labels && product.labels.length > 0 && (
-                            <View style={styles.labelsContainer}>
-                                {product.labels.map((label, index) => (
-                                    <View key={index} style={styles.labelBadge}>
-                                        <Text style={styles.labelText}>
-                                            {label.replace('en:', '').replace(/-/g, ' ')}
-                                        </Text>
-                                    </View>
-                                ))}
-                            </View>
-                        )}
+  const goBack = () => {
+    setHistory((prev) => {
+      if (prev.length === 0) return prev;
+      const copy = [...prev];
+      const last = copy.pop()!;
+      setDisplayProduct(last);
+      return copy;
+    });
+  };
 
-                        <View style={styles.nutritionSection}>
-                            <Text style={styles.sectionTitle}>Valeurs Nutritionnelles (pour 100g)</Text>
+  const openAlternative = async (barcode: string) => {
+    if (!displayProduct) return;
 
-                            <View style={styles.nutritionTable}>
-                                {product.nutritionRows.map((row, index) => (
-                                    <NutritionRow
-                                        key={index}
-                                        label={row.label}
-                                        value={row.value}
-                                        unit={row.unit}
-                                        bold={row.bold}
-                                        subItem={row.subItem}
-                                        last={index === product.nutritionRows.length - 1}
-                                    />
-                                ))}
-                            </View>
+    const clean = String(barcode).trim().replace(/[^\d]/g, "");
+    if (!clean) return;
 
-                            {product.nutritionRows.length === 0 && (
-                                <Text style={styles.emptyText}>Aucune donnée nutritionnelle disponible.</Text>
-                            )}
-                        </View>
+    setLoadingDisplayProduct(true);
 
-                    </ScrollView>
+    try {
+      const p = await fetchProduct(clean);
+
+      if (!p) {
+        // si OFF ne trouve pas, on ne change pas d’écran
+        setLoadingDisplayProduct(false);
+        return;
+      }
+
+      // push current product in history then show new
+      setHistory((prev) => [...prev, displayProduct]);
+      setDisplayProduct(p);
+    } catch (e) {
+      console.log("Erreur chargement alternative:", e);
+    } finally {
+      setLoadingDisplayProduct(false);
+    }
+  };
+
+  if (!displayProduct) return null;
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      presentationStyle="overFullScreen"
+      onRequestClose={handleClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {/* Top bar: back (si historique) + close */}
+          <View style={styles.topBar}>
+            {history.length > 0 ? (
+              <TouchableOpacity style={styles.backButton} onPress={goBack} activeOpacity={0.8}>
+                <IconSymbol name="chevron.left" size={22} color="#333" />
+                <Text style={styles.backText}>Retour</Text>
+              </TouchableOpacity>
+            ) : (
+              <View />
+            )}
+
+            <TouchableOpacity style={styles.closeButton} onPress={handleClose} activeOpacity={0.8}>
+              <IconSymbol name="xmark.circle.fill" size={30} color="#333" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {loadingDisplayProduct && (
+              <Text style={styles.smallText}>Chargement du produit…</Text>
+            )}
+
+            <View style={styles.headerSection}>
+              {displayProduct.image ? (
+                <Image source={{ uri: displayProduct.image }} style={styles.productImage} />
+              ) : (
+                <View style={[styles.productImage, styles.placeholderImage]}>
+                  <Text style={{ color: "#888" }}>No Image</Text>
                 </View>
+              )}
+
+              <View style={styles.headerTexts}>
+                <Text style={styles.productName}>{displayProduct.name}</Text>
+                <Text style={styles.brandName}>{displayProduct.brands}</Text>
+
+                {displayProduct.quantity ? (
+                  <Text style={styles.quantityText}>Quantité : {displayProduct.quantity}</Text>
+                ) : null}
+
+                <View style={{ marginTop: 8 }}>
+                  <NutriScoreBadge score={score} />
+                  <HealthWarning score={score} />
+                </View>
+              </View>
             </View>
-        </Modal>
-    );
+
+            {displayProduct.labels && displayProduct.labels.length > 0 && (
+              <View style={styles.labelsContainer}>
+                {displayProduct.labels.map((label, index) => (
+                  <View key={index} style={styles.labelBadge}>
+                    <Text style={styles.labelText}>
+                      {label.replace("en:", "").replace(/-/g, " ")}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <View style={styles.nutritionSection}>
+              <Text style={styles.sectionTitle}>Valeurs Nutritionnelles (pour 100g)</Text>
+
+              <View style={styles.nutritionTable}>
+                {displayProduct.nutritionRows.map((row, index) => (
+                  <NutritionRow
+                    key={index}
+                    label={row.label}
+                    value={row.value}
+                    unit={row.unit}
+                    bold={row.bold}
+                    subItem={row.subItem}
+                    level={row.level}
+                    last={index === displayProduct.nutritionRows.length - 1}
+                  />
+                ))}
+              </View>
+
+              {displayProduct.nutritionRows.length === 0 && (
+                <Text style={styles.emptyText}>Aucune donnée nutritionnelle disponible.</Text>
+              )}
+            </View>
+
+            {(score === "d" || score === "e") && (
+              <View style={styles.altSection}>
+                <Text style={styles.sectionTitle}>Alternatives plus saines</Text>
+
+                {loadingAlt && (
+                  <Text style={styles.smallText}>Recherche d’alternatives…</Text>
+                )}
+
+                {!loadingAlt && alternatives.length === 0 && (
+                  <Text style={styles.smallText}>Aucune alternative trouvée.</Text>
+                )}
+
+                {alternatives.map((alt) => (
+                  <TouchableOpacity
+                    key={alt.code}
+                    style={styles.altCard}
+                    activeOpacity={0.85}
+                    onPress={() => openAlternative(alt.code)}
+                  >
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      {alt.imageUrl ? (
+                        <Image source={{ uri: alt.imageUrl }} style={styles.altImage} />
+                      ) : (
+                        <View style={[styles.altImage, styles.placeholderImage]}>
+                          <Text style={{ color: "#888", fontSize: 12 }}>No Img</Text>
+                        </View>
+                      )}
+
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.altTitle}>{alt.name}</Text>
+                        {!!alt.brand && <Text style={styles.smallText}>{alt.brand}</Text>}
+                        <Text style={styles.smallText}>
+                          NutriScore: {alt.nutriScore.toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 interface NutritionRowProps {
-    label: string;
-    value: string;
-    unit: string;
-    bold?: boolean;
-    subItem?: boolean;
-    last?: boolean;
+  label: string;
+  value: string;
+  unit: string;
+  bold?: boolean;
+  subItem?: boolean;
+  last?: boolean;
+  level?: "low" | "moderate" | "high" | null;
 }
 
-const NutritionRow = ({ label, value, unit, bold, subItem, last }: NutritionRowProps) => (
-    <View style={[
-        styles.nutriRow,
-        last && styles.nutriRowLast,
-        subItem && styles.nutriRowSub
-    ]}>
-        <Text style={[styles.nutriLabel, bold && styles.bold]}>
-            {label}
-        </Text>
-
-        <View style={styles.valueContainer}>
-            <Text style={[styles.nutriValue, bold && styles.bold]}>{value}</Text>
-            <Text style={[styles.nutriUnit, bold && styles.bold]}> {unit}</Text>
-        </View>
-    </View>
+const NutritionRow = ({ label, value, unit, bold, subItem, last, level }: NutritionRowProps) => (
+  <View
+    style={[
+      styles.nutriRow,
+      level === "high" && styles.levelHigh,
+      level === "moderate" && styles.levelModerate,
+      level === "low" && styles.levelLow,
+      last && styles.nutriRowLast,
+      subItem && styles.nutriRowSub,
+    ]}
+  >
+    <Text style={[styles.nutriLabel, bold && styles.boldText, subItem && styles.subItemText]}>
+      {label}
+    </Text>
+    <Text style={[styles.nutriValue, bold && styles.boldText]}>
+      {value} {unit}
+    </Text>
+  </View>
 );
 
 const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        height: '85%',
-        borderTopLeftRadius: 25,
-        borderTopRightRadius: 25,
-        paddingHorizontal: 20,
-        paddingTop: 15,
-    },
-    closeButton: {
-        alignSelf: 'flex-end',
-        marginBottom: 10,
-        padding: 5,
-    },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    height: "85%",
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
 
-    // Header
-    headerSection: {
-        flexDirection: 'row',
-        marginBottom: 20,
-        alignItems: 'flex-start',
-    },
-    productImage: {
-        width: 100,
-        height: 100,
-        resizeMode: 'contain',
-        borderRadius: 10,
-        backgroundColor: '#f9f9f9',
-        borderWidth: 1,
-        borderColor: '#eee'
-    },
-    placeholderImage: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTexts: {
-        flex: 1,
-        marginLeft: 15,
-        justifyContent: 'center',
-    },
-    productName: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#000',
-        marginBottom: 5,
-    },
-    brandName: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 5,
-    },
-    quantityText: {
-        fontSize: 14,
-        color: '#888',
-    },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+  },
+  backText: {
+    fontSize: 14,
+    color: "#333",
+  },
 
-    // Labels
-    labelsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginBottom: 25,
-    },
-    labelBadge: {
-        backgroundColor: '#e0f2f1',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        marginRight: 8,
-        marginBottom: 8,
-        borderWidth: 1,
-        borderColor: '#b2dfdb'
-    },
-    labelText: {
-        fontSize: 12,
-        color: '#00695c',
-        fontWeight: '600',
-        textTransform: 'capitalize',
-    },
+  closeButton: {
+    alignSelf: "flex-end",
+    padding: 5,
+  },
 
-    // Section Nutrition
-    nutritionSection: {
-        marginBottom: 30,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-        marginBottom: 12,
-        color: '#000',
-    },
-    nutritionTable: {
-        backgroundColor: '#fff',
-        borderWidth: 2,
-        borderColor: '#000',
-        borderRadius: 4,
-    },
-    emptyText: {
-        fontStyle: 'italic',
-        color: '#666',
-        marginTop: 5,
-    },
+  headerSection: {
+    flexDirection: "row",
+    gap: 15,
+    marginTop: 6,
+    marginBottom: 12,
+  },
+  headerTexts: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  productImage: {
+    width: 110,
+    height: 110,
+    borderRadius: 18,
+    backgroundColor: "#f2f2f2",
+  },
+  placeholderImage: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  productName: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111",
+  },
+  brandName: {
+    fontSize: 14,
+    color: "#555",
+    marginTop: 2,
+  },
+  quantityText: {
+    fontSize: 13,
+    color: "#555",
+    marginTop: 4,
+  },
 
-    // Styles des lignes du tableau
-    nutriRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-    },
-    nutriRowSub: {
-        paddingLeft: 35,
-        backgroundColor: '#fbfbfb',
-    },
-    nutriRowLast: {
-        borderBottomWidth: 0,
-    },
-    nutriLabel: {
-        fontSize: 15,
-        color: '#000',
-        flex: 1,
-        flexWrap: 'wrap',
-    },
-    valueContainer: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
-        minWidth: 70,
-        justifyContent: 'flex-end',
-    },
-    nutriValue: {
-        fontSize: 16,
-        color: '#000',
-        fontWeight: '500',
-    },
-    nutriUnit: {
-        fontSize: 12,
-        color: '#666',
-        marginLeft: 2,
-    },
-    bold: {
-        fontWeight: '900',
-        color: '#000',
-    },
+  labelsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 14,
+  },
+  labelBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "#f1f1f1",
+    borderRadius: 14,
+  },
+  labelText: {
+    fontSize: 12,
+    color: "#444",
+    textTransform: "capitalize",
+  },
+
+  nutritionSection: {
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 10,
+    color: "#111",
+  },
+  nutritionTable: {
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  nutriRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  nutriRowLast: {
+    borderBottomWidth: 0,
+  },
+  nutriRowSub: {
+    paddingLeft: 22,
+  },
+  nutriLabel: {
+    fontSize: 13,
+    color: "#333",
+  },
+  nutriValue: {
+    fontSize: 13,
+    color: "#333",
+  },
+  boldText: {
+    fontWeight: "700",
+  },
+  subItemText: {
+    color: "#666",
+  },
+  emptyText: {
+    marginTop: 10,
+    color: "#666",
+    fontSize: 13,
+  },
+
+  // levels (optionnel)
+  levelHigh: { backgroundColor: "rgba(255,0,0,0.06)" },
+  levelModerate: { backgroundColor: "rgba(255,165,0,0.06)" },
+  levelLow: { backgroundColor: "rgba(0,128,0,0.06)" },
+
+  // alternatives
+  altSection: { marginTop: 18 },
+  altCard: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+    backgroundColor: "#fff",
+  },
+  altImage: {
+    width: 60,
+    height: 60,
+    resizeMode: "contain",
+    borderRadius: 10,
+    backgroundColor: "#f9f9f9",
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  altTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 2,
+  },
+  smallText: {
+    fontSize: 13,
+    color: "#666",
+  },
 });
