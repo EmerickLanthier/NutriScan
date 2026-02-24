@@ -18,37 +18,41 @@ export async function fetchHealthyAlternatives(params: {
 }): Promise<AlternativeProduct[]> {
   const pageSize = params.pageSize ?? 20;
 
-  const url = new URL("https://world.openfoodfacts.org/cgi/search.pl");
-  url.searchParams.set("search_simple", "1");
-  url.searchParams.set("action", "process");
-  url.searchParams.set("json", "1");
-  url.searchParams.set("page_size", String(pageSize));
+//construire params + encoder (iOS safe)
+const q: Record<string, string> = {
+  search_simple: "1",
+  action: "process",
+  json: "1",
+  page_size: String(pageSize),
+  fields: [
+    "code",
+    "product_name",
+    "brands",
+    "nutriscore_grade",
+    "nutrition_grade_fr",
+    "image_front_small_url",
+    "categories_tags",
+  ].join(","),
+};
 
-  // Recherche par catégorie
-  if (params.categoryTag) {
-    url.searchParams.set("tagtype_0", "categories");
-    url.searchParams.set("tag_contains_0", "contains");
-    url.searchParams.set("tag_0", params.categoryTag);
-  } else {
-    // Fallback sur nom produit
-    url.searchParams.set("search_terms", params.queryTextFallback ?? "produit");
-  }
+if (params.categoryTag && params.categoryTag.trim().length > 0) {
+  q.tagtype_0 = "categories";
+  q.tag_contains_0 = "contains";
+  q.tag_0 = params.categoryTag.trim();
+} else {
+  q.search_terms = (params.queryTextFallback ?? "produit").trim();
+}
 
-  // Ajouter des champs pertinents
-  url.searchParams.set(
-    "fields",
-    [
-      "code",
-      "product_name",
-      "brands",
-      "nutriscore_grade",
-      "nutrition_grade_fr",
-      "image_front_small_url",
-      "categories_tags"
-    ].join(",")
-  );
+const query = Object.entries(q)
+  .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+  .join("&");
 
-  const res = await fetch(url.toString());
+const url = `https://world.openfoodfacts.org/cgi/search.pl?${query}`;
+
+console.log("ALT FETCH URL:", url);
+
+const res = await fetch(url);
+
   if (!res.ok) throw new Error(`OFF search failed: ${res.status}`);
 
   const data = await res.json();
