@@ -20,8 +20,7 @@ export default function ForgotPassword() {
 
     const handleResetPassword = () => {
         console.log("Envoi du lien de réinitialisation à :", email);
-        router.push('/connexion');
-    };
+        router.push('../(auth)/connexion');    };
 
     return (
         <SafeAreaView style={styles.safeArea}>

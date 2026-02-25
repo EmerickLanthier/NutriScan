@@ -21,8 +21,7 @@ export default function ProfileScreen() {
 
     const handleLogout = () => {
         console.log("Déconnexion en cours...");
-        router.replace('/connexion');
-    };
+        router.replace('../(auth)/connexion');    };
 
     return (
         <View style={styles.mainContainer}>

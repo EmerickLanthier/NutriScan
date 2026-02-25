@@ -25,8 +25,7 @@ export default function Register() {
 
     const handleRegister = () => {
         console.log("Inscription de :", name, email);
-        router.replace('/connexion');
-    };
+        router.replace('../(auth)/connexion');    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
