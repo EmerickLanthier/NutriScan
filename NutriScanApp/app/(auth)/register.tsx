@@ -23,9 +23,38 @@ export default function Register() {
 
     const router = useRouter();
 
-    const handleRegister = () => {
-        console.log("Inscription de :", name, email);
-        router.replace('../(auth)/connexion');    };
+    const handleRegister = async () => {
+        if (password !== confirmPassword) {
+            alert("Les mots de passe ne correspondent pas !");
+            return;
+        }
+
+        try {
+            const response = await fetch('http://192.168.2.251:5000/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: name,
+                    email: email,
+                    password: password
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert("Compte créé avec succès !");
+                router.replace('../(auth)/connexion');
+            } else {
+                alert("Erreur : " + data.message);
+            }
+        } catch (error) {
+            console.error("Erreur réseau :", error);
+            alert("Impossible de se connecter au serveur.");
+        }
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>

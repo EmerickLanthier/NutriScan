@@ -20,9 +20,31 @@ export default function LoginScreen() {
 
     const router = useRouter();
 
-    const handleLogin = () => {
-        console.log("Tentative de connexion avec :", email);
-        router.replace('/(tabs)/account');
+    const handleLogin = async () => {
+        try {
+            const response = await fetch('http://192.168.2.251:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log("Jeton reçu :", data.token);
+                router.replace('/(tabs)');
+            } else {
+                alert("Erreur : " + data.message);
+            }
+        } catch (error) {
+            console.error("Erreur réseau :", error);
+            alert("Impossible de se connecter au serveur.");
+        }
     };
 
     return (
