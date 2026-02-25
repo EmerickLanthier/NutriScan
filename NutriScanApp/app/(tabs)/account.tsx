@@ -11,21 +11,29 @@ import {
     Platform,
     Dimensions
 } from 'react-native';
+import {useRouter} from 'expo-router';
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 const BUTTON_SIZE = (width - 60) / 2;
 
 export default function ProfileScreen() {
+    const router = useRouter();
+
+    const handleLogout = () => {
+        console.log("Déconnexion en cours...");
+        router.replace('/connexion');
+    };
+
     return (
         <View style={styles.mainContainer}>
-            <StatusBar barStyle="dark-content" />
+            <StatusBar barStyle="dark-content"/>
             <SafeAreaView style={styles.safeArea}>
 
                 <ScrollView contentContainerStyle={styles.scrollContainer}>
                     <View style={styles.headerSection}>
                         <View style={styles.avatarContainer}>
                             <Image
-                                source={{ uri: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600' }}
+                                source={{uri: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600'}}
                                 style={styles.avatarImage}
                             />
                         </View>
@@ -54,6 +62,10 @@ export default function ProfileScreen() {
                             Platea elit proin sed placerat ut tristique tristique. Venenatis rhoncus interdum
                             pellentesque hendrerit id turpis eget purus sed. Quam pretium morbi molestie.
                         </Text>
+
+                        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                            <Text style={styles.logoutButtonText}>Se déconnecter</Text>
+                        </TouchableOpacity>
                     </View>
 
                 </ScrollView>
@@ -64,47 +76,19 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-    mainContainer: {
-        flex: 1,
-        backgroundColor: '#F7F2EE',
-    },
-    safeArea: {
-        flex: 1,
-    },
-    scrollContainer: {
-        paddingBottom: 100,
-        alignItems: 'center',
-    },
-
-    headerSection: {
-        marginTop: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: 180,
-        width: '100%',
-    },
-    watermarkImage: {
-        position: 'absolute',
-        width: 200,
-        height: 100,
-        opacity: 0.1,
-        tintColor: 'green',
-        resizeMode: 'contain',
-        top: 10,
-    },
+    mainContainer: {flex: 1, backgroundColor: '#F7F2EE'},
+    safeArea: {flex: 1},
+    scrollContainer: {paddingBottom: 100, alignItems: 'center'},
+    headerSection: {marginTop: 20, alignItems: 'center', justifyContent: 'center', height: 180, width: '100%'},
     avatarContainer: {
         width: 140,
         height: 140,
         borderRadius: 70,
         overflow: 'hidden',
         borderWidth: 2,
-        borderColor: '#F7F2EE',
+        borderColor: '#F7F2EE'
     },
-    avatarImage: {
-        width: '100%',
-        height: '100%',
-    },
-
+    avatarImage: {width: '100%', height: '100%'},
     greetingText: {
         fontSize: 22,
         fontWeight: 'bold',
@@ -112,15 +96,14 @@ const styles = StyleSheet.create({
         color: '#000',
         marginTop: 10,
         marginBottom: 30,
-        textAlign: 'center',
+        textAlign: 'center'
     },
-
     cardsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: '100%',
         paddingHorizontal: 20,
-        marginBottom: 30,
+        marginBottom: 30
     },
     card: {
         width: BUTTON_SIZE,
@@ -128,7 +111,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#DCDCDC',
         borderRadius: 25,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     cardText: {
         fontSize: 20,
@@ -136,19 +119,15 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#000',
         fontWeight: '500',
-        lineHeight: 28,
+        lineHeight: 28
     },
-
-    othersSection: {
-        width: '100%',
-        paddingHorizontal: 25,
-    },
+    othersSection: {width: '100%', paddingHorizontal: 25},
     sectionTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
         marginBottom: 10,
-        textAlign: 'left',
+        textAlign: 'left'
     },
     loremText: {
         fontSize: 16,
@@ -156,6 +135,27 @@ const styles = StyleSheet.create({
         lineHeight: 24,
         textAlign: 'justify',
         color: '#1A1A1A',
+        marginBottom: 30
     },
 
+    logoutButton: {
+        width: '100%',
+        height: 50,
+        backgroundColor: '#FF6B6B',
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+        shadowColor: "#000",
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2
+    },
+    logoutButtonText: {
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+        color: '#FFF',
+        fontWeight: 'bold'
+    },
 });
