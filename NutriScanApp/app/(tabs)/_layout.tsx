@@ -56,24 +56,6 @@ export default function TabLayout() {
                     tabBarIcon: ({ color }) => <NavigationIcons size={28} name="codicon--account" color={color} />,
                 }}
             />
-            <Tabs.Screen
-                name="connexion"
-                options={{
-                    href: null,
-                }}
-            />
-            <Tabs.Screen
-                name="register"
-                options={{
-                    href: null,
-                }}
-            />
-            <Tabs.Screen
-                name="forgotPassword"
-                options={{
-                    href: null,
-                }}
-            />
         </Tabs>
     );
 }
