@@ -1,6 +1,6 @@
 import { ProductData } from './openFoodFacts';
 
-const API_URL = `${process.env.NUTRISCAN_API_URL}/product/scan`
+const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/product/scan`
 
 export const addToHistory = async (product: ProductData) => {
     try {
