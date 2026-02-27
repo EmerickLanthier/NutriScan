@@ -57,36 +57,36 @@ exports.login = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Erreur lors de la connexion", error: error.message });
     }
+};
 
-    exports.updateProfile = async (req, res) => {
-        try {
-            const { email, username, currentPassword, newPassword } = req.body;
+exports.updateProfile = async (req, res) => {
+    try {
+        const { email, username, currentPassword, newPassword } = req.body;
 
-            const user = await User.findOne({ email });
-            if (!user) {
-                return res.status(404).json({ message: "Utilisateur introuvable." });
-            }
-
-            if (username) {
-                user.username = username;
-            }
-
-            if (newPassword && newPassword !== '') {
-                const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
-                if (!isMatch) {
-                    return res.status(400).json({ message: "Le mot de passe actuel est incorrect." });
-                }
-
-                const salt = await bcrypt.genSalt(10);
-                user.password_hash = await bcrypt.hash(newPassword, salt);
-            }
-
-            await user.save();
-
-            res.status(200).json({ message: "Profil mis à jour avec succès !", user: { username: user.username, email: user.email } });
-
-        } catch (error) {
-            res.status(500).json({ message: "Erreur serveur", error: error.message });
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur introuvable." });
         }
-    };
+
+        if (username) {
+            user.username = username;
+        }
+
+        if (newPassword && newPassword !== '') {
+            const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+            if (!isMatch) {
+                return res.status(400).json({ message: "Le mot de passe actuel est incorrect." });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            user.password_hash = await bcrypt.hash(newPassword, salt);
+        }
+
+        await user.save();
+
+        res.status(200).json({ message: "Profil mis à jour avec succès !", user: { username: user.username, email: user.email } });
+
+    } catch (error) {
+        res.status(500).json({ message: "Erreur serveur", error: error.message });
+    }
 };
