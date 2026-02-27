@@ -48,32 +48,35 @@ export default function EditProfileScreen() {
         }
 
         try {
-            await AsyncStorage.setItem('userName', username);
+            const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/auth/update`;
+            const token = await AsyncStorage.getItem('userToken');
 
-            // TODO : Requête API pour envoyer le nouveau nom et (si rempli) l'ancien/nouveau mot de passe
-            /*
-            const response = await fetch('https://TON_APP_RENDER.onrender.com/api/auth/update', {
+            const response = await fetch(API_URL, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${await AsyncStorage.getItem('userToken')}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    email: email,
                     username: username,
                     currentPassword: currentPassword,
                     newPassword: newPassword
                 })
             });
-            */
 
-            Alert.alert(
-                "Succès",
-                "Votre profil a été mis à jour !",
-                [{ text: "OK", onPress: () => router.back() }]
-            );
+            const data = await response.json();
+
+            if (response.ok) {
+                await AsyncStorage.setItem('userName', username);
+                Alert.alert("Succès", "Votre profil a été mis à jour !", [{ text: "OK", onPress: () => router.back() }]);
+            } else {
+                Alert.alert("Erreur", data.message);
+            }
+
         } catch (error) {
             console.error("Erreur de sauvegarde :", error);
-            Alert.alert("Erreur", "Impossible de sauvegarder les modifications.");
+            Alert.alert("Erreur réseau", "Impossible de joindre le serveur.");
         }
     };
 
@@ -149,7 +152,6 @@ export default function EditProfileScreen() {
                             secureTextEntry
                         />
 
-                        {/* CONFIRMER LE MOT DE PASSE */}
                         {newPassword.length > 0 && (
                             <View>
                                 <Text style={styles.inputLabel}>Confirmer le nouveau mot de passe</Text>
