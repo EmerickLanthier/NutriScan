@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const nutritionRowSchema = new mongoose.Schema({
     name: { type: String, required: true },
@@ -25,7 +25,7 @@ const productSchema = new mongoose.Schema({
     },
     nutritionRows: [nutritionRowSchema],
 
-    main_category_tags: [{ type: String, index: true }],
+    main_category_tag: { type: String, index: true },
     last_updated: { type: Date, default: Date.now }
 });
 

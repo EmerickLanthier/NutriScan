@@ -1,24 +1,30 @@
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
+require('dotenv').config();
+
+const productRoutes = require('./routes/product.routes');
+const authRoutes = require('../src/routes/authRoutes');
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
-const uri = process.env.MONGODB_URI;
-mongoose.connect(uri)
-    .then(() => console.log("Connecté à MongoDB Atlas !"))
-    .catch(err => console.error("Erreur de connexion :", err));
 
-const authRoutes = require('../src/routes/authRoutes');
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Connecté à MongoDB Atlas (nutriscan_db)'))
+    .catch((err) => console.error('Erreur de connexion MongoDB:', err));
+
+app.use('/api/product', productRoutes);
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
     res.send('API NutriScan en ligne !');
 });
 
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Serveur démarré et en écoute sur le port ${PORT}`);
+    console.log(`Serveur démarré sur le port ${PORT}`);
 });
