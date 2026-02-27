@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+
 import {
     StyleSheet,
     View,
@@ -27,7 +29,7 @@ interface HistoryItem {
     favorite?: boolean; // Pour l'US-004
 }
 
-const API_URL = `${process.env.NUTRISCAN_API_URL}/product/history`
+const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/product/history`;
 
 export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
@@ -41,15 +43,19 @@ export default function HistoryScreen() {
             const data = await response.json();
             setHistoryData(data);
         } catch (error) {
+            console.error(API_URL)
+            console.error(`${process.env.EXPO_PUBLIC_API_URL}`)
             console.error("Erreur de récupération de l'historique:", error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchHistory();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchHistory();
+        }, [])
+    );
 
     const renderHistoryItem: ListRenderItem<HistoryItem> = ({ item }) => (
         <View style={styles.historyRow}>
