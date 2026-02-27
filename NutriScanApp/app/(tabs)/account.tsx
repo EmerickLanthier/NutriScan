@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     StyleSheet,
     Text,
@@ -25,27 +26,30 @@ export default function ProfileScreen() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const checkLoginStatus = async () => {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                if (token) {
-                    const storedName = await AsyncStorage.getItem('userName');
-                    const storedEmail = await AsyncStorage.getItem('userEmail');
-                    setUsername(storedName || 'Utilisateur');
-                    setEmail(storedEmail || '');
-                    setIsLoggedIn(true);
-                } else {
-                    setIsLoggedIn(false);
+    useFocusEffect(
+        useCallback(() => {
+            const checkLoginStatus = async () => {
+                try {
+                    const token = await AsyncStorage.getItem('userToken');
+                    if (token) {
+                        const storedName = await AsyncStorage.getItem('userName');
+                        const storedEmail = await AsyncStorage.getItem('userEmail');
+                        setUsername(storedName || 'Utilisateur');
+                        setEmail(storedEmail || '');
+                        setIsLoggedIn(true);
+                    } else {
+                        setIsLoggedIn(false);
+                    }
+                } catch (error) {
+                    console.error("Erreur de chargement", error);
+                } finally {
+                    setIsLoading(false);
                 }
-            } catch (error) {
-                console.error("Erreur de chargement", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        checkLoginStatus();
-    }, []);
+            };
+
+            checkLoginStatus();
+        }, [])
+    );
 
     const handleLogout = async () => {
         console.log("Déconnexion en cours...");
