@@ -11,19 +11,24 @@ exports.handleScan = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const newHistoryEntry = new History({
-            barcode: productData.barcode,
-            name: productData.name,
-            image: productData.image,
-            nutriscore: productData.nutriscore,
-            // userId: req.user.id // --- TODO: À implémenter avec l'authentification
-        });
-
-        await newHistoryEntry.save();
+        await History.findOneAndUpdate(
+            {
+                barcode: productData.barcode,
+                // userId: req.user.id // TODO: À implémenter avec l'authentification
+            },
+            {
+                barcode: productData.barcode,
+                name: productData.name,
+                image: productData.image,
+                nutriscore: productData.nutriscore,
+                scannedAt: Date.now()
+            },
+            { upsert: true, new: true }
+        );
 
         res.status(201).json({
             success: true,
-            message: "Produit enregistré dans le cache et l'historique"
+            message: "Produit mis à jour dans le cache et l'historique"
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
