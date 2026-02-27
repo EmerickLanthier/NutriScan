@@ -22,6 +22,8 @@ export default function Register() {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const router = useRouter();
+    const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/auth/register`;
+
 
     const handleRegister = async () => {
         if (password !== confirmPassword) {
@@ -30,7 +32,7 @@ export default function Register() {
         }
 
         try {
-            const response = await fetch('http://192.168.2.251:5000/api/auth/register', {
+            const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
