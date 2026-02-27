@@ -55,7 +55,8 @@ export default function ProfileScreen() {
         console.log("Déconnexion en cours...");
         await AsyncStorage.clear();
         setIsLoggedIn(false);
-        router.replace('/(tabs)');    };
+        router.replace('/(tabs)');
+    };
 
     if (isLoading) {
         return (
@@ -79,7 +80,7 @@ export default function ProfileScreen() {
 
                     <TouchableOpacity
                         style={styles.loginButtonPrimary}
-                        onPress={() => router.push('/(auth)/connexion')}
+                        onPress={() => router.push('/connexion')}
                     >
                         <Text style={styles.loginButtonTextPrimary}>Créer un compte ou se connecter</Text>
                     </TouchableOpacity>
@@ -96,8 +97,9 @@ export default function ProfileScreen() {
 
                     <View style={styles.headerSection}>
                         <View style={styles.avatarContainer}>
+                            {/* Remplacement par un avatar générique standard */}
                             <Image
-                                source={{ uri: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600' }}
+                                source={{ uri: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' }}
                                 style={styles.avatarImage}
                             />
                         </View>
@@ -121,14 +123,10 @@ export default function ProfileScreen() {
 
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}>Mon Compte</Text>
+
                         <View style={styles.menuBox}>
                             <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/edit-profile')}>
                                 <Text style={styles.menuItemText}>Modifier le profil</Text>
-                                <Text style={styles.menuArrow}>›</Text>
-                            </TouchableOpacity>
-                            <View style={styles.separator} />
-                            <TouchableOpacity style={styles.menuItem}>
-                                <Text style={styles.menuItemText}>Préférences alimentaires</Text>
                                 <Text style={styles.menuArrow}>›</Text>
                             </TouchableOpacity>
                         </View>
@@ -191,7 +189,8 @@ const styles = StyleSheet.create({
     avatarContainer: {
         width: 120, height: 120, borderRadius: 60, overflow: 'hidden',
         borderWidth: 3, borderColor: '#FFFFFF', shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 5, marginBottom: 15
+        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 5, marginBottom: 15,
+        backgroundColor: '#EAEAEA'
     },
     avatarImage: { width: '100%', height: '100%' },
     nameText: { fontSize: 26, fontWeight: 'bold', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', color: '#1A1A1A', marginBottom: 5 },
