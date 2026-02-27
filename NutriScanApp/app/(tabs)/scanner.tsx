@@ -4,6 +4,7 @@ import { Camera, CameraView, BarcodeScanningResult } from 'expo-camera';
 import { fetchProduct, ProductData } from '@/services/openFoodFacts';
 import ProductDetailModal from '@/components/ProductDetailModal'; //pour la modale
 import { useIsFocused } from '@react-navigation/native';
+import {addToHistory} from "@/services/history";
 
 export default function ScannerScreen() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -33,6 +34,8 @@ export default function ScannerScreen() {
             if (product) {
                 setScannedProduct(product);
                 setModalVisible(true);
+
+                await addToHistory(product);
             } else {
                 Alert.alert("Introuvable", "Produit non trouvé sur OpenFoodFacts", [
                     { text: "OK", onPress: resetScannerLock }
