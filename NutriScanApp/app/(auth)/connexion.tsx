@@ -6,23 +6,25 @@ import {
     View,
     TextInput,
     TouchableOpacity,
-    SafeAreaView,
     KeyboardAvoidingView,
     Platform,
     StatusBar,
     TouchableWithoutFeedback,
     Keyboard
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     const router = useRouter();
+    const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/auth/login`;
 
     const handleLogin = async () => {
         try {
-            const response = await fetch('http://192.168.2.251:5000/api/auth/login', {
+            const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -37,6 +39,11 @@ export default function LoginScreen() {
 
             if (response.ok) {
                 console.log("Jeton reçu :", data.token);
+
+                await AsyncStorage.setItem('userToken', data.token);
+                await AsyncStorage.setItem('userName', data.user.username);
+                await AsyncStorage.setItem('userEmail', data.user.email);
+
                 router.replace('/(tabs)');
             } else {
                 alert("Erreur : " + data.message);
@@ -84,7 +91,7 @@ export default function LoginScreen() {
 
                             <TouchableOpacity
                                 style={styles.forgotPassword}
-                                onPress={() => router.push('/forgotPassword')}
+                                onPress={() => router.push('/(auth)/forgotPassword')}
                             >
                                 <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
                             </TouchableOpacity>
@@ -96,7 +103,7 @@ export default function LoginScreen() {
 
                         <View style={styles.footerContainer}>
                             <Text style={styles.footerText}>Pas encore de compte ? </Text>
-                            <TouchableOpacity onPress={() => router.push('/register')}>
+                            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
                                 <Text style={styles.registerText}>S'inscrire</Text>
                             </TouchableOpacity>
                         </View>
@@ -121,7 +128,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingHorizontal: 30,
     },
-
     headerContainer: {
         marginBottom: 50,
         alignItems: 'center',
@@ -138,7 +144,6 @@ const styles = StyleSheet.create({
         fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
         color: '#555',
     },
-
     formContainer: {
         width: '100%',
     },
@@ -164,7 +169,6 @@ const styles = StyleSheet.create({
         color: '#555',
         textDecorationLine: 'underline',
     },
-
     loginButton: {
         width: '100%',
         height: 55,
@@ -184,7 +188,6 @@ const styles = StyleSheet.create({
         color: '#000',
         fontWeight: 'bold',
     },
-
     footerContainer: {
         flexDirection: 'row',
         justifyContent: 'center',

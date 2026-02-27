@@ -1,160 +1,246 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     StyleSheet,
     Text,
     View,
     Image,
     TouchableOpacity,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     Platform,
     Dimensions
 } from 'react-native';
-import {useRouter} from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const {width} = Dimensions.get('window');
-const BUTTON_SIZE = (width - 60) / 2;
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 60) / 2;
 
 export default function ProfileScreen() {
     const router = useRouter();
 
-    const handleLogout = () => {
+    // Variables d'état (vides au départ)
+    const [username, setUsername] = useState('Chargement...');
+    const [email, setEmail] = useState('...');
+
+    useEffect(() => {
+        const loadUserData = async () => {
+            try {
+                const storedName = await AsyncStorage.getItem('userName');
+                const storedEmail = await AsyncStorage.getItem('userEmail');
+
+                if (storedName) setUsername(storedName);
+                if (storedEmail) setEmail(storedEmail);
+            } catch (error) {
+                console.error("Erreur de chargement", error);
+            }
+        };
+        loadUserData();
+    }, []);
+
+    const handleLogout = async () => {
         console.log("Déconnexion en cours...");
-        router.replace('../(auth)/connexion');    };
+        // On vide la mémoire pour que le prochain utilisateur ne voie pas tes données !
+        await AsyncStorage.clear();
+        router.replace('/(auth)/connexion');
+    };
 
     return (
-        <View style={styles.mainContainer}>
-            <StatusBar barStyle="dark-content"/>
-            <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+            <StatusBar barStyle="dark-content" />
+            <View style={styles.mainContainer}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContainer}
+                    showsVerticalScrollIndicator={false}
+                >
 
-                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    {/* --- EN-TÊTE DU PROFIL --- */}
                     <View style={styles.headerSection}>
                         <View style={styles.avatarContainer}>
                             <Image
-                                source={{uri: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600'}}
+                                source={{ uri: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600' }}
                                 style={styles.avatarImage}
                             />
                         </View>
+                        <Text style={styles.nameText}>{username}</Text>
+                        <Text style={styles.emailText}>{email}</Text>
                     </View>
 
-                    <Text style={styles.greetingText}>Bonjour, (nom d’utilisateur)</Text>
+                    <View style={styles.sectionContainer}>
+                        <Text style={styles.sectionTitle}>Mes Découvertes</Text>
+                        <View style={styles.cardsContainer}>
+                            <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+                                <Text style={styles.cardEmoji}>🍎</Text>
+                                <Text style={styles.cardText}>Aliments{'\n'}Favoris</Text>
+                            </TouchableOpacity>
 
-                    <View style={styles.cardsContainer}>
-                        <TouchableOpacity style={styles.card}>
-                            <Text style={styles.cardText}>
-                                Aliments{'\n'}Favoris
-                            </Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.card}>
-                            <Text style={styles.cardText}>
-                                Recettes{'\n'}Favorites
-                            </Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+                                <Text style={styles.cardEmoji}>📖</Text>
+                                <Text style={styles.cardText}>Recettes{'\n'}Favorites</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
-                    <View style={styles.othersSection}>
-                        <Text style={styles.sectionTitle}>Autres</Text>
-                        <Text style={styles.loremText}>
-                            Lorem ipsum dolor sit amet consectetur. Sed fermentum eu suspendisse nunc.
-                            Platea elit proin sed placerat ut tristique tristique. Venenatis rhoncus interdum
-                            pellentesque hendrerit id turpis eget purus sed. Quam pretium morbi molestie.
-                        </Text>
+                    <View style={styles.sectionContainer}>
+                        <Text style={styles.sectionTitle}>Mon Compte</Text>
 
-                        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                        <View style={styles.menuBox}>
+                            <TouchableOpacity style={styles.menuItem}>
+                                <Text style={styles.menuItemText}>Modifier le profil</Text>
+                                <Text style={styles.menuArrow}>›</Text>
+                            </TouchableOpacity>
+                            <View style={styles.separator} />
+                            <TouchableOpacity style={styles.menuItem}>
+                                <Text style={styles.menuItemText}>Préférences alimentaires</Text>
+                                <Text style={styles.menuArrow}>›</Text>
+                            </TouchableOpacity>
+                            <View style={styles.separator} />
+                            <TouchableOpacity style={styles.menuItem}>
+                                <Text style={styles.menuItemText}>À propos de NutriScan</Text>
+                                <Text style={styles.menuArrow}>›</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
                             <Text style={styles.logoutButtonText}>Se déconnecter</Text>
                         </TouchableOpacity>
                     </View>
 
                 </ScrollView>
-
-            </SafeAreaView>
-        </View>
+            </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    mainContainer: {flex: 1, backgroundColor: '#F7F2EE'},
-    safeArea: {flex: 1},
-    scrollContainer: {paddingBottom: 100, alignItems: 'center'},
-    headerSection: {marginTop: 20, alignItems: 'center', justifyContent: 'center', height: 180, width: '100%'},
-    avatarContainer: {
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: '#F7F2EE'
+    safeArea: { flex: 1, backgroundColor: '#F7F2EE' },
+    mainContainer: { flex: 1 },
+    scrollContainer: { paddingBottom: 40 },
+
+    headerSection: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 30,
+        backgroundColor: '#F7F2EE'
     },
-    avatarImage: {width: '100%', height: '100%'},
-    greetingText: {
-        fontSize: 22,
+    avatarContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        overflow: 'hidden',
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 5,
+        marginBottom: 15
+    },
+    avatarImage: { width: '100%', height: '100%' },
+    nameText: {
+        fontSize: 26,
         fontWeight: 'bold',
         fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-        color: '#000',
-        marginTop: 10,
-        marginBottom: 30,
-        textAlign: 'center'
+        color: '#1A1A1A',
+        marginBottom: 5,
     },
-    cardsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        paddingHorizontal: 20,
-        marginBottom: 30
-    },
-    card: {
-        width: BUTTON_SIZE,
-        height: BUTTON_SIZE,
-        backgroundColor: '#DCDCDC',
-        borderRadius: 25,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    cardText: {
-        fontSize: 20,
+    emailText: {
+        fontSize: 16,
         fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-        textAlign: 'center',
-        color: '#000',
-        fontWeight: '500',
-        lineHeight: 28
+        color: '#666',
+        fontStyle: 'italic'
     },
-    othersSection: {width: '100%', paddingHorizontal: 25},
+
+    sectionContainer: {
+        paddingHorizontal: 25,
+        marginBottom: 35,
+    },
     sectionTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-        marginBottom: 10,
-        textAlign: 'left'
+        color: '#1A1A1A',
+        marginBottom: 15,
     },
-    loremText: {
+
+    cardsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    card: {
+        width: CARD_WIDTH,
+        height: CARD_WIDTH * 1.1,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    cardEmoji: {
+        fontSize: 32,
+        marginBottom: 10,
+    },
+    cardText: {
         fontSize: 16,
         fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-        lineHeight: 24,
-        textAlign: 'justify',
-        color: '#1A1A1A',
-        marginBottom: 30
+        textAlign: 'center',
+        color: '#333',
+        fontWeight: '600',
+        lineHeight: 22,
+    },
+
+    menuBox: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        paddingHorizontal: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+        elevation: 3,
+        marginBottom: 25,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 18,
+    },
+    menuItemText: {
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+        color: '#333',
+    },
+    menuArrow: {
+        fontSize: 20,
+        color: '#CCC',
+        fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#F0F0F0',
     },
 
     logoutButton: {
         width: '100%',
-        height: 50,
-        backgroundColor: '#FF6B6B',
-        borderRadius: 25,
+        height: 55,
+        backgroundColor: '#FFF0F0',
+        borderWidth: 1,
+        borderColor: '#FFD6D6',
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 20,
-        shadowColor: "#000",
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 2
     },
     logoutButtonText: {
         fontSize: 16,
         fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-        color: '#FFF',
-        fontWeight: 'bold'
+        color: '#FF4747', // Texte rouge vif
+        fontWeight: 'bold',
     },
 });
