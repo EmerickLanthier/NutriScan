@@ -73,7 +73,7 @@ export default function LoginScreen() {
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => router.replace('/(tabs)')}
+                    onPress={() => router.back()}
                     activeOpacity={0.7}
                 >
                     <Ionicons name="close" size={30} color="#1A1A1A" />
