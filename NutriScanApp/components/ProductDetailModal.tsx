@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,10 @@ import { fetchProduct, ProductData } from "@/services/openFoodFacts";
 import { fetchHealthyAlternatives, AlternativeProduct } from "@/services/healthyAlternatives";
 import type { NutriScoreLetter } from "@/services/productQuality";
 
+import { generateRecipesFromGemini, AIRecipe } from "@/services/geminiRecipes";
+import RecipeCard from "@/components/RecipeCard";
+import RecipeStepModal from "@/components/RecipeStepModal";
+
 interface ProductDetailModalProps {
   visible: boolean;
   product: ProductData | null;
@@ -32,10 +36,14 @@ export default function ProductDetailModal({
   const [alternatives, setAlternatives] = useState<AlternativeProduct[]>([]);
   const [loadingAlt, setLoadingAlt] = useState(false);
 
-  // ✅ remplace le “2e modal” par une navigation interne
   const [displayProduct, setDisplayProduct] = useState<ProductData | null>(product);
   const [history, setHistory] = useState<ProductData[]>([]);
   const [loadingDisplayProduct, setLoadingDisplayProduct] = useState(false);
+
+  const [recipes, setRecipes] = useState<AIRecipe[]>([]);
+  const [loadingRecipes, setLoadingRecipes] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState<AIRecipe | null>(null);
+  const [recipeModalVisible, setRecipeModalVisible] = useState(false);
 
   // reset quand on ouvre/ferme ou quand le product parent change
   useEffect(() => {
@@ -92,8 +100,28 @@ export default function ProductDetailModal({
     load();
   }, [displayProduct?.barcode, displayProduct?.name, displayProduct?.categoryTag, score]);
 
+  // ✅ loadRecipes avec useCallback — se met à jour quand displayProduct.name change
+  const loadRecipes = useCallback(async () => {
+    if (!displayProduct?.name) return;
+
+    try {
+      setLoadingRecipes(true);
+      const generated = await generateRecipesFromGemini(displayProduct.name);
+      setRecipes(generated);
+    } catch (e) {
+      console.log("Erreur recettes Gemini:", e);
+      setRecipes([]);
+    } finally {
+      setLoadingRecipes(false);
+    }
+  }, [displayProduct?.name]);
+
+  // ✅ useEffect déclenché à chaque fois que loadRecipes change (= nouveau produit)
+  useEffect(() => {
+    loadRecipes();
+  }, [loadRecipes]);
+
   const handleClose = () => {
-    // reset local state
     setDisplayProduct(product);
     setHistory([]);
     setAlternatives([]);
@@ -124,12 +152,10 @@ export default function ProductDetailModal({
       const p = await fetchProduct(clean);
 
       if (!p) {
-        // si OFF ne trouve pas, on ne change pas d’écran
         setLoadingDisplayProduct(false);
         return;
       }
 
-      // push current product in history then show new
       setHistory((prev) => [...prev, displayProduct]);
       setDisplayProduct(p);
     } catch (e) {
@@ -137,6 +163,16 @@ export default function ProductDetailModal({
     } finally {
       setLoadingDisplayProduct(false);
     }
+  };
+
+  const openRecipe = (recipe: AIRecipe) => {
+    setSelectedRecipe(recipe);
+    setRecipeModalVisible(true);
+  };
+
+  const closeRecipeModal = () => {
+    setRecipeModalVisible(false);
+    setSelectedRecipe(null);
   };
 
   if (!displayProduct) return null;
@@ -240,7 +276,7 @@ export default function ProductDetailModal({
                 <Text style={styles.sectionTitle}>Alternatives plus saines</Text>
 
                 {loadingAlt && (
-                  <Text style={styles.smallText}>Recherche d’alternatives…</Text>
+                  <Text style={styles.smallText}>Recherche d'alternatives…</Text>
                 )}
 
                 {!loadingAlt && alternatives.length === 0 && (
@@ -275,6 +311,32 @@ export default function ProductDetailModal({
                 ))}
               </View>
             )}
+
+            <View style={{ marginTop: 20 }}>
+              <Text style={styles.sectionTitle}>Recettes santé proposées</Text>
+
+              {loadingRecipes && (
+                <Text style={styles.smallText}>Génération des recettes...</Text>
+              )}
+
+              {!loadingRecipes && recipes.length === 0 && (
+                <Text style={styles.smallText}>Aucune recette disponible.</Text>
+              )}
+
+              {recipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onOpenRecipe={openRecipe}
+                />
+              ))}
+            </View>
+
+            <RecipeStepModal
+              visible={recipeModalVisible}
+              recipe={selectedRecipe}
+              onClose={closeRecipeModal}
+            />
           </ScrollView>
         </View>
       </View>
