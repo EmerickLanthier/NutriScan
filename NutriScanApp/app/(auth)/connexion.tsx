@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -57,6 +58,17 @@ export default function LoginScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
+
+            <View style={styles.header}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.replace('/(tabs)')}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="close" size={30} color="#1A1A1A" />
+                </TouchableOpacity>
+            </View>
+
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -96,7 +108,7 @@ export default function LoginScreen() {
                                 <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                            <TouchableOpacity style={styles.loginButton} onPress={handleLogin} activeOpacity={0.8}>
                                 <Text style={styles.loginButtonText}>Se connecter</Text>
                             </TouchableOpacity>
                         </View>
@@ -120,6 +132,18 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F7F2EE',
     },
+    header: {
+        width: '100%',
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        alignItems: 'flex-start',
+        zIndex: 10,
+    },
+    backButton: {
+        padding: 5,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        borderRadius: 20,
+    },
     keyboardView: {
         flex: 1,
     },
@@ -127,6 +151,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         paddingHorizontal: 30,
+        paddingBottom: 40,
     },
     headerContainer: {
         marginBottom: 50,
