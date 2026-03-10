@@ -31,9 +31,18 @@ export default function RootLayout() {
 
     return (
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack
+                screenOptions={{
+                    headerShown: false,
+                    gestureEnabled: false,
+                    animation: 'slide_from_right'
+                }}
+            >
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="(auth)" />
+
+                {}
+                <Stack.Screen name="edit-profile" />
             </Stack>
             <StatusBar style="auto" />
         </ThemeProvider>
