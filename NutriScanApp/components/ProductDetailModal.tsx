@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -100,28 +100,8 @@ export default function ProductDetailModal({
     load();
   }, [displayProduct?.barcode, displayProduct?.name, displayProduct?.categoryTag, score]);
 
-  // ✅ loadRecipes avec useCallback — se met à jour quand displayProduct.name change
-  const loadRecipes = useCallback(async () => {
-    if (!displayProduct?.name) return;
-
-    try {
-      setLoadingRecipes(true);
-      const generated = await generateRecipesFromGemini(displayProduct.name);
-      setRecipes(generated);
-    } catch (e) {
-      console.log("Erreur recettes Gemini:", e);
-      setRecipes([]);
-    } finally {
-      setLoadingRecipes(false);
-    }
-  }, [displayProduct?.name]);
-
-  // ✅ useEffect déclenché à chaque fois que loadRecipes change (= nouveau produit)
-  useEffect(() => {
-    loadRecipes();
-  }, [loadRecipes]);
-
   const handleClose = () => {
+    // reset local state
     setDisplayProduct(product);
     setHistory([]);
     setAlternatives([]);
@@ -152,16 +132,33 @@ export default function ProductDetailModal({
       const p = await fetchProduct(clean);
 
       if (!p) {
+        // si OFF ne trouve pas, on ne change pas d’écran
         setLoadingDisplayProduct(false);
         return;
       }
 
+      // push current product in history then show new
       setHistory((prev) => [...prev, displayProduct]);
       setDisplayProduct(p);
     } catch (e) {
       console.log("Erreur chargement alternative:", e);
     } finally {
       setLoadingDisplayProduct(false);
+    }
+  };
+
+  const loadRecipes = async () => {
+    if (!displayProduct?.name) return;
+
+    try {
+      setLoadingRecipes(true);
+      const generated = await generateRecipesFromGemini(displayProduct.name);
+      setRecipes(generated);
+    } catch (e) {
+      console.log("Erreur recettes Gemini:", e);
+      setRecipes([]);
+    } finally {
+      setLoadingRecipes(false);
     }
   };
 
@@ -276,7 +273,7 @@ export default function ProductDetailModal({
                 <Text style={styles.sectionTitle}>Alternatives plus saines</Text>
 
                 {loadingAlt && (
-                  <Text style={styles.smallText}>Recherche d'alternatives…</Text>
+                  <Text style={styles.smallText}>Recherche d’alternatives…</Text>
                 )}
 
                 {!loadingAlt && alternatives.length === 0 && (
@@ -310,17 +307,24 @@ export default function ProductDetailModal({
                   </TouchableOpacity>
                 ))}
               </View>
-            )}
 
+              
+            )}
             <View style={{ marginTop: 20 }}>
               <Text style={styles.sectionTitle}>Recettes santé proposées</Text>
 
-              {loadingRecipes && (
-                <Text style={styles.smallText}>Génération des recettes...</Text>
+              {!loadingRecipes && recipes.length === 0 && (
+                <TouchableOpacity
+                  style={styles.generateButton}
+                  onPress={loadRecipes}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.generateButtonText}>✨ Générer des recettes</Text>
+                </TouchableOpacity>
               )}
 
-              {!loadingRecipes && recipes.length === 0 && (
-                <Text style={styles.smallText}>Aucune recette disponible.</Text>
+              {loadingRecipes && (
+                <Text style={styles.smallText}>Génération des recettes...</Text>
               )}
 
               {recipes.map((recipe) => (
@@ -548,5 +552,17 @@ const styles = StyleSheet.create({
   smallText: {
     fontSize: 13,
     color: "#666",
+  },
+  generateButton: {
+    backgroundColor: "#111",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  generateButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
