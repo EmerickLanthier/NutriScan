@@ -2,28 +2,27 @@ const Product = require('../models/Product');
 const History = require('../models/History');
 
 exports.handleScan = async (req, res) => {
+    console.log("--- Route /handleScan appelée ---");
+    console.log("Body reçu :", req.body);
     try {
+
         const productData = req.body;
 
         await Product.findOneAndUpdate(
             { barcode: productData.barcode },
-            { ...productData, last_updated: Date.now() },
-            { upsert: true, new: true }
+            { $set: { ...productData, last_updated: Date.now() } },
+            { upsert: true, returnDocument: 'after' }
         );
 
+
         await History.findOneAndUpdate(
+            { barcode: productData.barcode },
             {
-                barcode: productData.barcode,
-                // userId: req.user.id // TODO: À implémenter avec l'authentification
+                $set: {
+                    ...productData, last_updated: Date.now()
+                }
             },
-            {
-                barcode: productData.barcode,
-                name: productData.name,
-                image: productData.image,
-                nutriscore: productData.nutriscore,
-                scannedAt: Date.now()
-            },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
 
         res.status(201).json({
