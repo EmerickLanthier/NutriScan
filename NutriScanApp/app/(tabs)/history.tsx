@@ -27,7 +27,7 @@ interface HistoryItem {
     favorite?: boolean; // Pour l'US-004
 }
 
-const API_URL = `${process.env.NUTRISCAN_API_URL}/product/history`
+const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/product/history`
 
 export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
