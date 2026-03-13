@@ -51,6 +51,21 @@ export default function HistoryScreen() {
         fetchHistory();
     }, []);
 
+    const handleDelete = async (id: string) => {
+        try {
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/product/history/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                setHistoryData(prevData => prevData.filter(item => item._id !== id));
+            } else {
+                console.error("Erreur lors de la suppression.");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la suppression:", error);
+        }
+    };
     const renderHistoryItem: ListRenderItem<HistoryItem> = ({ item }) => (
         <View style={styles.historyRow}>
             <View style={styles.productImageContainer}>
@@ -63,14 +78,17 @@ export default function HistoryScreen() {
 
             <View style={styles.productDetails}>
                 <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
-
             </View>
 
             <View style={styles.actionIcons}>
                 <TouchableOpacity style={styles.iconButton}>
                     <Ionicons name="star-outline" size={28} color="#FFD700" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton}>
+
+                <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => handleDelete(item._id)}
+                >
                     <Ionicons name="close" size={32} color="#FF4444" />
                 </TouchableOpacity>
             </View>
@@ -113,6 +131,8 @@ export default function HistoryScreen() {
             )}
         </View>
     );
+
+
 }
 
 const styles = StyleSheet.create({

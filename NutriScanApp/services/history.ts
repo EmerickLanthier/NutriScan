@@ -14,3 +14,4 @@ export const addToHistory = async (product: ProductData) => {
         console.error("Erreur backend:", error);
     }
 }
+
