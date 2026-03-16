@@ -57,6 +57,8 @@ export default function ProductDetailModal({
     }
     setDisplayProduct(product);
     setHistory([]);
+    setAlternatives([]);
+    setRecipes([]);
   }, [visible, product]);
 
   const score: NutriScoreLetter = useMemo(() => {
@@ -98,13 +100,13 @@ export default function ProductDetailModal({
     };
 
     load();
-  }, [displayProduct?.barcode, displayProduct?.name, displayProduct?.categoryTag, score]);
+  }, [visible, displayProduct?.barcode, displayProduct?.name, displayProduct?.categoryTag, score]);
 
   const handleClose = () => {
-    // reset local state
     setDisplayProduct(product);
     setHistory([]);
     setAlternatives([]);
+    setRecipes([]);
     setLoadingAlt(false);
     setLoadingDisplayProduct(false);
     onClose();
