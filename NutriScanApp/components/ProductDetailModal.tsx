@@ -68,39 +68,24 @@ export default function ProductDetailModal({
       : "unknown";
   }, [displayProduct?.nutriscore]);
 
-  // load alternatives (uniquement si D/E)
-  useEffect(() => {
-    if (!displayProduct) {
+  const loadAlternatives = async () => {
+    if (!displayProduct) return;
+    if (score !== "d" && score !== "e") return;
+
+    try {
+      setLoadingAlt(true);
+      const result = await fetchHealthyAlternatives({
+        categoryTag: displayProduct.categoryTag,
+        queryTextFallback: displayProduct.name ?? "produit",
+      });
+      setAlternatives(result);
+    } catch (e) {
+      console.log("Erreur alternatives:", e);
       setAlternatives([]);
+    } finally {
       setLoadingAlt(false);
-      return;
     }
-
-    if (score !== "d" && score !== "e") {
-      setAlternatives([]);
-      return;
-    }
-
-    const load = async () => {
-      try {
-        setLoadingAlt(true);
-
-        const result = await fetchHealthyAlternatives({
-          categoryTag: displayProduct.categoryTag,
-          queryTextFallback: displayProduct.name ?? "produit",
-        });
-
-        setAlternatives(result);
-      } catch (e) {
-        console.log("Erreur alternatives:", e);
-        setAlternatives([]);
-      } finally {
-        setLoadingAlt(false);
-      }
-    };
-
-    load();
-  }, [visible, displayProduct?.barcode, displayProduct?.name, displayProduct?.categoryTag, score]);
+  };
 
   const handleClose = () => {
     setDisplayProduct(product);
@@ -154,7 +139,14 @@ export default function ProductDetailModal({
 
     try {
       setLoadingRecipes(true);
-      const generated = await generateRecipesFromGemini(displayProduct.name);
+      const nutritionInfo = displayProduct.nutritionRows
+        .map(r => r.label + ": " + r.value + r.unit)
+        .join(", ");
+      const generated = await generateRecipesFromGemini(
+        displayProduct.name,
+        displayProduct.brands,
+        nutritionInfo
+      );
       setRecipes(generated);
     } catch (e) {
       console.log("Erreur recettes Gemini:", e);
@@ -274,12 +266,18 @@ export default function ProductDetailModal({
               <View style={styles.altSection}>
                 <Text style={styles.sectionTitle}>Alternatives plus saines</Text>
 
-                {loadingAlt && (
-                  <Text style={styles.smallText}>Recherche d’alternatives…</Text>
+                {!loadingAlt && alternatives.length === 0 && (
+                  <TouchableOpacity
+                    style={styles.generateButton}
+                    onPress={loadAlternatives}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.generateButtonText}>🔍 Trouver des alternatives</Text>
+                  </TouchableOpacity>
                 )}
 
-                {!loadingAlt && alternatives.length === 0 && (
-                  <Text style={styles.smallText}>Aucune alternative trouvée.</Text>
+                {loadingAlt && (
+                  <Text style={styles.smallText}>Recherche d'alternatives…</Text>
                 )}
 
                 {alternatives.map((alt) => (
@@ -309,9 +307,8 @@ export default function ProductDetailModal({
                   </TouchableOpacity>
                 ))}
               </View>
-
-              
             )}
+
             <View style={{ marginTop: 20 }}>
               <Text style={styles.sectionTitle}>Recettes santé proposées</Text>
 

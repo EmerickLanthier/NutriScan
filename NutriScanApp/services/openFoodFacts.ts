@@ -116,8 +116,11 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
   const sodiumVal = Number(n["sodium_100g"] ?? 0);
   if (Number.isFinite(sodiumVal) && sodiumVal > 0) addRow("sodium", "Sodium", "g");
 
+  // Prendre le tag "en:" le plus spécifique (le plus long) pour des alternatives précises
   const categoryTag: string | null = Array.isArray(p.categories_tags)
-    ? (p.categories_tags.find((t: any) => typeof t === "string" && t.startsWith("en:")) ?? null)
+    ? (p.categories_tags
+        .filter((t: any) => typeof t === "string" && t.startsWith("en:"))
+        .sort((a: string, b: string) => b.length - a.length)[0] ?? null)
     : null;
 
   return {

@@ -39,6 +39,7 @@ if (params.categoryTag && params.categoryTag.trim().length > 0) {
   q.tagtype_0 = "categories";
   q.tag_contains_0 = "contains";
   q.tag_0 = params.categoryTag.trim();
+  // Ne PAS combiner avec search_terms — trop restrictif, retourne 0 résultats
 } else {
   q.search_terms = (params.queryTextFallback ?? "produit").trim();
 }

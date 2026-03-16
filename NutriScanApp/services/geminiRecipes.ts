@@ -11,21 +11,22 @@ export interface AIRecipe {
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 
-function buildPrompt(scannedFoodName: string) {
+function buildPrompt(scannedFoodName: string, brand?: string, nutritionInfo?: string) {
   return `
 Tu es un assistant de nutrition.
-Génère 3 recettes santé basées sur cet aliment scanné : "${scannedFoodName}".
+Génère 3 recettes santé UNIQUEMENT basées sur ce produit exact :
+- Nom du produit : "${scannedFoodName}"${brand ? `\n- Marque : "${brand}"` : ""}${nutritionInfo ? `\n- Composition nutritionnelle : ${nutritionInfo}` : ""}
+
+IMPORTANT : Les recettes doivent obligatoirement utiliser CE produit comme ingrédient principal. Ne génère pas de recettes génériques. Adapte toujours au produit exact scanné.
 
 Contraintes :
 - Les recettes doivent être réalistes, simples et saines
 - Réponse en français
-- Chaque ingrédient dans "ingredients" doit inclure la quantité exacte (ex: "500g de farine", "2 c.s. de vanille", "3 oeufs")
-- Chaque étape dans "steps" doit mentionner les quantités précises des ingrédients utilisés (ex: "Verser 500g de farine dans un bol", "Ajouter 2 c.s. de vanille et mélanger")
 - Chaque recette doit contenir :
   - title
   - shortDescription
-  - ingredients (tableau avec quantités)
-  - steps (tableau avec quantités mentionnées dans chaque étape)
+  - ingredients (tableau)
+  - steps (tableau)
   - prepTimeMinutes
   - servings
   - healthReason
@@ -48,7 +49,9 @@ Contraintes :
 }
 
 export const generateRecipesFromGemini = async (
-  scannedFoodName: string
+  scannedFoodName: string,
+  brand?: string,
+  nutritionInfo?: string
 ): Promise<AIRecipe[]> => {
   if (!GEMINI_API_KEY) {
     throw new Error("Clé Gemini manquante");
@@ -62,7 +65,7 @@ export const generateRecipesFromGemini = async (
       {
         parts: [
           {
-            text: buildPrompt(scannedFoodName),
+            text: buildPrompt(scannedFoodName, brand, nutritionInfo),
           },
         ],
       },
