@@ -127,7 +127,7 @@ exports.forgotPassword = async (req, res) => {
             subject: 'NutriScan - Réinitialisation de votre mot de passe',
             text: `Bonjour ${user.username},\n\nVous recevez ce courriel car vous avez demandé la réinitialisation du mot de passe de votre compte NutriScan.\n\nCliquez sur le lien suivant pour créer un nouveau mot de passe :\n\n${resetUrl}\n\nCe lien expirera dans une heure.\nSi vous n'avez pas fait cette demande, ignorez ce message.\n\nL'équipe NutriScan.`
         };
-
+        console.log("Tentative d'envoi du courriel...")
         await transporter.sendMail(mailOptions);
 
         res.status(200).json({ message: "Si cette adresse existe, un lien de réinitialisation a été envoyé." });
