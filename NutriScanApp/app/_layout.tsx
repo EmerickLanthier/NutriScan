@@ -1,12 +1,19 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-
+import 'react-native-reanimated';
+import { useFonts } from 'expo-font';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+
+const linking = {
+    prefixes: ['nutriscanapp://'],
+    config: {
+        screens: {
+            '(auth)/reset-password': 'reset-password',
+        },
+    },
+};
 
 export const unstable_settings = {
     initialRouteName: '(tabs)',
@@ -40,11 +47,9 @@ export default function RootLayout() {
             >
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="(auth)" />
-
-                {}
                 <Stack.Screen name="edit-profile" />
+                {}
             </Stack>
-            <StatusBar style="auto" />
         </ThemeProvider>
     );
 }
