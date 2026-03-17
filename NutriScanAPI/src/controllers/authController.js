@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto'); // Pour générer le jeton secret
+const nodemailer = require('nodemailer'); // Pour envoyer le courriel
 
 exports.register = async (req, res) => {
     try {
@@ -88,5 +90,46 @@ exports.updateProfile = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: "Erreur serveur", error: error.message });
+    }
+};
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(200).json({ message: "Si cette adresse existe, un lien de réinitialisation a été envoyé." });
+        }
+
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        user.reset_token = resetToken;
+        user.reset_token_expires = Date.now() + 3600000; // + 1 heure
+        await user.save();
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const resetUrl = `nutriscan://reset-password?token=${resetToken}`;
+
+        const mailOptions = {
+            to: user.email,
+            from: process.env.EMAIL_USER,
+            subject: 'NutriScan - Réinitialisation de votre mot de passe',
+            text: `Bonjour ${user.username},\n\nVous recevez ce courriel car vous avez demandé la réinitialisation du mot de passe de votre compte NutriScan.\n\nCliquez sur le lien suivant pour créer un nouveau mot de passe :\n\n${resetUrl}\n\nCe lien expirera dans une heure.\nSi vous n'avez pas fait cette demande, ignorez ce message.\n\nL'équipe NutriScan.`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ message: "Si cette adresse existe, un lien de réinitialisation a été envoyé." });
+
+    } catch (error) {
+        console.error("Erreur forgotPassword:", error);
+        res.status(500).json({ message: "Erreur lors de la demande de réinitialisation." });
     }
 };
