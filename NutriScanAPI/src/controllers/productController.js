@@ -36,7 +36,21 @@ exports.handleScan = async (req, res) => {
 
 exports.getHistory = async (req, res) => {
     try {
-        const history = await History.find().sort({ scannedAt: -1 });
+        const { sortBy, order } = req.query;
+
+        let sortQuery = { scannedAt: -1 };
+
+        if (sortBy) {
+            const sortDirection = order === 'asc' ? 1 : -1;
+
+            if (sortBy === 'nutriscore') {
+                sortQuery = { nutriscore: sortDirection };
+            } else if (sortBy === 'scannedAt') {
+                sortQuery = { scannedAt: sortDirection };
+            }
+        }
+
+        const history = await History.find().sort(sortQuery);
         res.status(200).json(history);
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
