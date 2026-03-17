@@ -16,7 +16,7 @@ const historySchema = new mongoose.Schema({
     nutriscore: { type: String, lowercase: true },
     scannedAt: {
         type: Date,
-        default: Date.now
+        default: Date.now()
     }
 });
 

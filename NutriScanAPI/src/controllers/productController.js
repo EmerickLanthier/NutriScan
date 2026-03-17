@@ -19,7 +19,7 @@ exports.handleScan = async (req, res) => {
             { barcode: productData.barcode },
             {
                 $set: {
-                    ...productData, last_updated: Date.now()
+                    ...productData, scannedAt: Date.now()
                 }
             },
             { upsert: true, returnDocument: 'after' }
