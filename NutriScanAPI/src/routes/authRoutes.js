@@ -6,6 +6,6 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.put('/update', authController.updateProfile);
 
-router.post('/forgot-password', authController.forgotPassword);
+router.post('/forgotPassword', authController.forgotPassword);
 
 module.exports = router;

@@ -19,7 +19,7 @@ export default function ForgotPasswordScreen() {
     const [email, setEmail] = useState('');
     const router = useRouter();
 
-    const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/auth/forgot-password`;
+    const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/auth/forgotPassword`;
 
     const handleResetPassword = async () => {
         if (!email) {
