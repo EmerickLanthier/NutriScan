@@ -137,3 +137,32 @@ exports.forgotPassword = async (req, res) => {
         res.status(500).json({ message: "Erreur lors de la demande de réinitialisation." });
     }
 };
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        const user = await User.findOne({
+            reset_token: token,
+            reset_token_expires: { $gt: Date.now() } // Vérifie que la date d'expiration est dans le futur
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Le lien de réinitialisation est invalide ou a expiré." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password_hash = await bcrypt.hash(newPassword, salt);
+
+        user.reset_token = null;
+        user.reset_token_expires = null;
+
+        await user.save();
+
+        res.status(200).json({ message: "Votre mot de passe a été réinitialisé avec succès !" });
+
+    } catch (error) {
+        console.error("Erreur resetPassword:", error);
+        res.status(500).json({ message: "Erreur lors de la réinitialisation du mot de passe." });
+    }
+};
