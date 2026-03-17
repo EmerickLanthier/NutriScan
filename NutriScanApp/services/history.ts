@@ -34,3 +34,27 @@ export const deleteHistoryItem = async (id: string): Promise<boolean> => {
         return false;
     }
 };
+
+export const getHistoryData = async (
+    sortBy?: 'scannedAt' | 'nutriscore' | null,
+    sortOrder: 'asc' | 'desc' = 'desc'
+) => {
+    try {
+        let url = API_URL_HISTORY;
+
+        if (sortBy) {
+            url += `?sortBy=${sortBy}&order=${sortOrder}`;
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Erreur réseau lors de la récupération de l'historique:", error);
+        return [];
+    }
+};

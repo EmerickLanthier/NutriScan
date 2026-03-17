@@ -14,7 +14,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 import { Ionicons } from '@expo/vector-icons';
 import {router} from "expo-router";
 import NavigationIcons from "@/components/ui/navigation-icons";
-import {API_URL_HISTORY, deleteHistoryItem} from "@/services/history";
+import {API_URL_HISTORY, deleteHistoryItem, getHistoryData} from "@/services/history";
 import { Alert } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -36,12 +36,15 @@ export default function HistoryScreen() {
     const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const [sortBy, setSortBy] = useState<'scannedAt' | 'nutriscore' | null>(null);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
     const fetchHistory = async () => {
         try {
             setIsLoading(true);
-            const response = await fetch(API_URL_HISTORY);
-            const data = await response.json();
+            const data = await getHistoryData(sortBy, sortOrder);
             setHistoryData(data);
+            setIsLoading(false);
         } catch (error) {
             console.error("Erreur de récupération de l'historique:", error);
         } finally {
@@ -51,7 +54,7 @@ export default function HistoryScreen() {
 
     useEffect(() => {
         fetchHistory();
-    }, []);
+    }, [sortBy, sortOrder]);
 
     const confirmDelete = (id: string) => {
         Alert.alert(
@@ -90,6 +93,9 @@ export default function HistoryScreen() {
 
             <View style={styles.productDetails}>
                 <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+                {item.nutriscore && (
+                    <Text style={styles.nutriscoreText}>Nutriscore: {item.nutriscore.toUpperCase()}</Text>
+                )}
             </View>
 
             <View style={styles.actionIcons}>
@@ -113,6 +119,52 @@ export default function HistoryScreen() {
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.historyHeaderTitle}>
                 <Text style={styles.historyHeaderText}>Historique complet</Text>
+            </View>
+
+            <View style={styles.sortContainer}>
+                <Text style={styles.sortLabel}>Trier par :</Text>
+
+                <TouchableOpacity
+                    style={[styles.sortButton, sortBy === 'scannedAt' && styles.activeSortButton]}
+                    onPress={() => setSortBy('scannedAt')}
+                >
+                    <Text style={[styles.sortText, sortBy === 'scannedAt' && styles.activeSortText]}>
+                        Date
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.sortButton, sortBy === 'nutriscore' && styles.activeSortButton]}
+                    onPress={() => setSortBy('nutriscore')}
+                >
+                    <Text style={[styles.sortText, sortBy === 'nutriscore' && styles.activeSortText]}>
+                        Nutriscore
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.orderButton}
+                    onPress={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    disabled={!sortBy}
+                >
+                    <Ionicons
+                        name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
+                        size={20}
+                        color={sortBy ? '#FFFFFF' : 'rgba(255,255,255,0.3)'}
+                    />
+                </TouchableOpacity>
+
+                {sortBy && (
+                    <TouchableOpacity
+                        style={styles.clearButton}
+                        onPress={() => {
+                            setSortBy(null);
+                            setSortOrder('desc');
+                        }}
+                    >
+                        <Ionicons name="close-circle" size={24} color="#FF4444" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {isLoading ? (
@@ -191,6 +243,11 @@ const styles = StyleSheet.create({
     listContent: {
         paddingHorizontal: 20,
         zIndex: 10,
+    },
+    nutriscoreText: {
+        color: '#E0E0E0',
+        fontSize: 12,
+        fontWeight: 'bold',
     },
     historyRow: {
         flexDirection: 'row',
@@ -292,4 +349,51 @@ const styles = StyleSheet.create({
         marginTop: 10,
         lineHeight: 22,
     },
+    sortContainer: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(58, 71, 36, 0.95)',
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        marginHorizontal: 20,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.1)',
+        gap: 8,
+    },
+    sortLabel: {
+        color: '#E0E0E0',
+        fontSize: 12,
+        marginRight: 4,
+    },
+    sortButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    activeSortButton: {
+        backgroundColor: '#FFFFFF',
+        borderColor: '#FFFFFF',
+    },
+    sortText: {
+        color: '#E0E0E0',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    activeSortText: {
+        color: '#3A4724',
+    },
+    orderButton: {
+        padding: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 'auto',
+    },
+    clearButton: {
+        padding: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+    }
 });
