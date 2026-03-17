@@ -14,6 +14,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 import { Ionicons } from '@expo/vector-icons';
 import {router} from "expo-router";
 import NavigationIcons from "@/components/ui/navigation-icons";
+import {API_URL_HISTORY, deleteHistoryItem} from "@/services/history";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -27,7 +28,7 @@ interface HistoryItem {
     favorite?: boolean; // Pour l'US-004
 }
 
-const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/product/history`
+
 
 export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
@@ -37,7 +38,7 @@ export default function HistoryScreen() {
     const fetchHistory = async () => {
         try {
             setIsLoading(true);
-            const response = await fetch(API_URL);
+            const response = await fetch(API_URL_HISTORY);
             const data = await response.json();
             setHistoryData(data);
         } catch (error) {
@@ -51,21 +52,7 @@ export default function HistoryScreen() {
         fetchHistory();
     }, []);
 
-    const handleDelete = async (id: string) => {
-        try {
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/product/history/${id}`, {
-                method: 'DELETE',
-            });
 
-            if (response.ok) {
-                setHistoryData(prevData => prevData.filter(item => item._id !== id));
-            } else {
-                console.error("Erreur lors de la suppression.");
-            }
-        } catch (error) {
-            console.error("Erreur lors de la suppression:", error);
-        }
-    };
     const renderHistoryItem: ListRenderItem<HistoryItem> = ({ item }) => (
         <View style={styles.historyRow}>
             <View style={styles.productImageContainer}>
@@ -87,7 +74,9 @@ export default function HistoryScreen() {
 
                 <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => handleDelete(item._id)}
+                    onPress={() =>
+                        deleteHistoryItem(item._id)
+                }
                 >
                     <Ionicons name="close" size={32} color="#FF4444" />
                 </TouchableOpacity>
