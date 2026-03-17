@@ -7,7 +7,9 @@ const userSchema = new mongoose.Schema({
     created_at: { type: Date, default: Date.now },
     favorite_products: [{ type: String, ref: 'Product' }],
     favorite_recipes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Recipe' }],
-    reset_token: { type: String, default: null }
+
+    reset_token: { type: String, default: null },
+    reset_token_expires: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('User', userSchema);
