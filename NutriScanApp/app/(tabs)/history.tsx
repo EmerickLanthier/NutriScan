@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {router} from "expo-router";
 import NavigationIcons from "@/components/ui/navigation-icons";
 import {API_URL_HISTORY, deleteHistoryItem} from "@/services/history";
+import { Alert } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -52,6 +53,30 @@ export default function HistoryScreen() {
         fetchHistory();
     }, []);
 
+    const confirmDelete = (id: string) => {
+        Alert.alert(
+            "Supprimer",
+            "Voulez-vous supprimer ce produit de l'historique ?",
+            [
+                { text: "Annuler", style: "cancel" },
+                {
+                    text: "Supprimer",
+                    style: "destructive",
+                    onPress: async () => {
+                        const success = await deleteHistoryItem(id);
+
+                        if (success) {
+                            setHistoryData((prevData) =>
+                                prevData.filter((item) => item._id !== id)
+                            );
+                        } else {
+                            Alert.alert("Erreur", "La suppression a échoué.");
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     const renderHistoryItem: ListRenderItem<HistoryItem> = ({ item }) => (
         <View style={styles.historyRow}>
@@ -75,7 +100,7 @@ export default function HistoryScreen() {
                 <TouchableOpacity
                     style={styles.iconButton}
                     onPress={() =>
-                        deleteHistoryItem(item._id)
+                        confirmDelete(item._id)
                 }
                 >
                     <Ionicons name="close" size={32} color="#FF4444" />
