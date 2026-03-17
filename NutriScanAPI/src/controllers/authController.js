@@ -2,7 +2,8 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto'); // Pour générer le jeton secret
-const nodemailer = require('nodemailer'); // Pour envoyer le courriel
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 exports.register = async (req, res) => {
     try {
@@ -104,33 +105,29 @@ exports.forgotPassword = async (req, res) => {
 
         const resetToken = crypto.randomBytes(20).toString('hex');
         user.reset_token = resetToken;
-        user.reset_token_expires = Date.now() + 3600000; // + 1 heure
+        user.reset_token_expires = Date.now() + 3600000;
         await user.save();
-
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 465,
-            secure: true,
-            family: 4,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            },
-            connectionTimeout: 10000,
-            greetingTimeout: 10000,
-            socketTimeout: 10000
-        });
 
         const resetUrl = `nutriscan://reset-password?token=${resetToken}`;
 
-        const mailOptions = {
+        const { data, error } = await resend.emails.send({
+            from: 'NutriScan <onboarding@resend.dev>', 
             to: user.email,
-            from: process.env.EMAIL_USER,
             subject: 'NutriScan - Réinitialisation de votre mot de passe',
-            text: `Bonjour ${user.username},\n\nVous recevez ce courriel car vous avez demandé la réinitialisation du mot de passe de votre compte NutriScan.\n\nCliquez sur le lien suivant pour créer un nouveau mot de passe :\n\n${resetUrl}\n\nCe lien expirera dans une heure.\nSi vous n'avez pas fait cette demande, ignorez ce message.\n\nL'équipe NutriScan.`
-        };
-        console.log("Tentative d'envoi du courriel...")
-        await transporter.sendMail(mailOptions);
+            html: `
+                <h2>Bonjour ${user.username},</h2>
+                <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+                <p>Cliquez sur le lien suivant pour le modifier :</p>
+                <a href="${resetUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a>
+                <p><small>Ce lien expirera dans une heure.</small></p>
+                <p>L'équipe NutriScan (Madrid)</p>
+            `
+        });
+
+        if (error) {
+            console.error("Erreur Resend:", error);
+            return res.status(500).json({ message: "Erreur lors de l'envoi du courriel via l'API." });
+        }
 
         res.status(200).json({ message: "Si cette adresse existe, un lien de réinitialisation a été envoyé." });
 
