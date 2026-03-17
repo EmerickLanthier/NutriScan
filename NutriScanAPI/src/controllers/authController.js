@@ -108,10 +108,10 @@ exports.forgotPassword = async (req, res) => {
         user.reset_token_expires = Date.now() + 3600000;
         await user.save();
 
-        const resetUrl = `nutriscan://reset-password?token=${resetToken}`;
+        const resetUrl = `nutriscanapp://reset-password?token=${resetToken}`;
 
         const { data, error } = await resend.emails.send({
-            from: 'NutriScan <onboarding@resend.dev>', 
+            from: 'NutriScan <onboarding@resend.dev>',
             to: user.email,
             subject: 'NutriScan - Réinitialisation de votre mot de passe',
             html: `
@@ -143,7 +143,7 @@ exports.resetPassword = async (req, res) => {
 
         const user = await User.findOne({
             reset_token: token,
-            reset_token_expires: { $gt: Date.now() } // Vérifie que la date d'expiration est dans le futur
+            reset_token_expires: { $gt: Date.now() }
         });
 
         if (!user) {
