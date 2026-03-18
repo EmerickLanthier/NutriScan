@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
 export default function ResetPasswordScreen() {
+    console.log("Écran de réinitialisation chargé !");
     const { token } = useLocalSearchParams();
     const router = useRouter();
 
@@ -63,37 +64,8 @@ export default function ResetPasswordScreen() {
     };
 
     return (
-        <ThemedView style={styles.container}>
-            <ThemedText type="title" style={styles.title}>Nouveau mot de passe</ThemedText>
-            <ThemedText style={styles.subtitle}>Saisissez votre nouveau mot de passe ci-dessous.</ThemedText>
-
-            <TextInput
-                style={styles.input}
-                placeholder="Nouveau mot de passe"
-                placeholderTextColor="#999"
-                secureTextEntry={true}
-                value={newPassword}
-                onChangeText={setNewPassword}
-            />
-
-            <TextInput
-                style={styles.input}
-                placeholder="Confirmer le mot de passe"
-                placeholderTextColor="#999"
-                secureTextEntry={true}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-            />
-
-            {isLoading ? (
-                <ActivityIndicator size="large" color="#4CAF50" />
-            ) : (
-                <Button
-                    title="Enregistrer"
-                    onPress={handleResetPassword}
-                    color="#4CAF50"
-                />
-            )}
+        <ThemedView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ThemedText>TEST : Écran de réinitialisation détecté</ThemedText>
         </ThemedView>
     );
 }
