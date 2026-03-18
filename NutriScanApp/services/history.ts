@@ -36,7 +36,7 @@ export const deleteHistoryItem = async (id: string): Promise<boolean> => {
 };
 
 export const getHistoryData = async (
-    sortBy?: 'scannedAt' | 'nutriscore' | null,
+    sortBy?: 'last_updated' | 'nutriscore' | null,
     sortOrder: 'asc' | 'desc' = 'desc',
     search: string = ''
 ) => {
@@ -85,6 +85,8 @@ export const getFullProductDetails = async (barcode: string): Promise<ProductDat
 
     if (product) {
         console.log("Produit trouvé dans notre BD locale !");
+        const { _id, __v, ...cleanProductData } = product as any;
+        await addToHistory(cleanProductData as ProductData);
         return product;
     }
 

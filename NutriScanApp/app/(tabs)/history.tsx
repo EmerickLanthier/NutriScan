@@ -38,7 +38,7 @@ export default function HistoryScreen() {
     const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const [sortBy, setSortBy] = useState<'scannedAt' | 'nutriscore' | null>(null);
+    const [sortBy, setSortBy] = useState<'last_updated' | 'nutriscore' | null>(null);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -193,10 +193,10 @@ export default function HistoryScreen() {
 
                         <Text style={styles.sortLabel}>Trier par :</Text>
                         <TouchableOpacity
-                            style={[styles.sortButton, sortBy === 'scannedAt' && styles.activeSortButton]}
-                            onPress={() => setSortBy('scannedAt')}
+                            style={[styles.sortButton, sortBy === 'last_updated' && styles.activeSortButton]}
+                            onPress={() => setSortBy('last_updated')}
                         >
-                            <Text style={[styles.sortText, sortBy === 'scannedAt' && styles.activeSortText]}>Date</Text>
+                            <Text style={[styles.sortText, sortBy === 'last_updated' && styles.activeSortText]}>Date</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.sortButton, sortBy === 'nutriscore' && styles.activeSortButton]}
