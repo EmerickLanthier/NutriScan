@@ -14,9 +14,9 @@ const historySchema = new mongoose.Schema({
     name: { type: String, required: true },
     image: { type: String },
     nutriscore: { type: String, lowercase: true },
-    scannedAt: {
+    last_updated: {
         type: Date,
-        default: Date.now
+        default: Date.now()
     }
 });
 
