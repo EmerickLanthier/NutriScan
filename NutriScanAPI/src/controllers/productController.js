@@ -19,7 +19,7 @@ exports.handleScan = async (req, res) => {
             { barcode: productData.barcode },
             {
                 $set: {
-                    ...productData, scannedAt: Date.now()
+                    ...productData, last_updated: Date.now()
                 }
             },
             { upsert: true, returnDocument: 'after' }
@@ -38,7 +38,7 @@ exports.getHistory = async (req, res) => {
     try {
         const { sortBy, order, search } = req.query;
 
-        let sortQuery = { scannedAt: -1 };
+        let sortQuery = { last_updated: -1 };
         let filterQuery = {};
 
         if (sortBy) {
@@ -46,8 +46,8 @@ exports.getHistory = async (req, res) => {
 
             if (sortBy === 'nutriscore') {
                 sortQuery = { nutriscore: sortDirection };
-            } else if (sortBy === 'scannedAt') {
-                sortQuery = { scannedAt: sortDirection };
+            } else if (sortBy === 'last_updated') {
+                sortQuery = { last_updated: sortDirection };
             }
         }
 
