@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     StyleSheet,
     View,
@@ -12,9 +13,9 @@ import {
     Alert,
     TextInput
 } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
-import {router} from "expo-router";
+import { router } from "expo-router";
 import NavigationIcons from "@/components/ui/navigation-icons";
 import {API_URL_HISTORY, deleteHistoryItem, getHistoryData} from "@/services/history";
 import ProductDetailModal from '@/components/ProductDetailModal';
@@ -30,13 +31,15 @@ interface HistoryItem {
     image: string;
     nutriscore: string;
     scannedAt: string;
-    favorite?: boolean; // Pour l'US-004
+    favorite?: boolean;
 }
 
 export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
     const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
+
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const [sortBy, setSortBy] = useState<'last_updated' | 'nutriscore' | null>(null);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -63,7 +66,7 @@ export default function HistoryScreen() {
             setHistoryData(data);
             setIsLoading(false);
         } catch (error) {
-            console.error("Erreur de récupération de l'historique:", error);
+            console.error("Erreur lors du chargement:", error);
         } finally {
             setIsLoading(false);
         }
@@ -119,6 +122,11 @@ export default function HistoryScreen() {
             ]
         );
     };
+    useFocusEffect(
+        useCallback(() => {
+            checkAuthAndFetchHistory();
+        }, [])
+    );
 
     const renderHistoryItem: ListRenderItem<HistoryItem> = ({ item }) => (
         <TouchableOpacity
@@ -133,14 +141,12 @@ export default function HistoryScreen() {
                     <View style={styles.placeholderImg} />
                 )}
             </View>
-
             <View style={styles.productDetails}>
                 <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
                 {item.nutriscore && (
                     <Text style={styles.nutriscoreText}>Nutriscore: {item.nutriscore.toUpperCase()}</Text>
                 )}
             </View>
-
             <View style={styles.actionIcons}>
                 <TouchableOpacity style={styles.iconButton}>
                     <Ionicons name="star-outline" size={28} color="#FFD700" />
@@ -157,6 +163,14 @@ export default function HistoryScreen() {
             </View>
         </TouchableOpacity>
     );
+
+    if (isLoading) {
+        return (
+            <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center' }]}>
+                <ActivityIndicator size="large" color="#FFFFFF" />
+            </View>
+        );
+    }
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -242,7 +256,7 @@ export default function HistoryScreen() {
                         styles.listContent,
                         historyData.length === 0 && { flex: 1, justifyContent: 'center' }
                     ]}
-                    onRefresh={fetchHistory}
+                    onRefresh={checkAuthAndFetchHistory}
                     refreshing={isLoading}
                     ListEmptyComponent={
                         <TouchableOpacity
@@ -251,7 +265,6 @@ export default function HistoryScreen() {
                             activeOpacity={0.7}
                         >
                             <NavigationIcons size={80} name="barcode_1550324" color="rgba(255,255,255,0.4)" />
-
                             <Text style={styles.emptyTitle}>La liste est vide...</Text>
                             <Text style={styles.emptySubtitle}>Pour commencer, scannez un produit !</Text>
                         </TouchableOpacity>
@@ -393,11 +406,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 15,
         borderTopRightRadius: 15,
     },
-    historyHeaderText: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        color: '#3D3D21'
-    },
+    historyHeaderText: { fontWeight: 'bold', fontSize: 16, color: '#3D3D21' },
     flatList: {
         flex: 1,
         marginHorizontal: 20,
@@ -406,27 +415,54 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 15,
         overflow: 'hidden'
     },
-    emptyStateContainer: {
-        alignItems: 'center',
+    listContent: { paddingHorizontal: 20, paddingTop: 15, paddingBottom: 20, zIndex: 10 },
+
+    historyRow: { flexDirection: 'row', backgroundColor: 'rgba(58, 71, 36, 0.8)', borderRadius: 20, padding: 12, marginBottom: 15, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    productImageContainer: { width: 60, height: 60, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 12, overflow: 'hidden' },
+    productImage: { width: '100%', height: '100%' },
+    placeholderImg: { flex: 1, backgroundColor: '#3A4724' },
+    productDetails: { flex: 1, paddingLeft: 15 },
+    productName: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16, marginBottom: 4 },
+    actionIcons: { flexDirection: 'row', gap: 10 },
+    iconButton: { padding: 5 },
+
+    emptyStateContainer: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
+    emptyTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold', marginTop: 20, ...Platform.select({ ios: { fontFamily: 'Times New Roman' }, android: { fontFamily: 'serif' } }) },
+    emptySubtitle: { color: '#E0E0E0', fontSize: 16, textAlign: 'center', marginTop: 10, lineHeight: 22 },
+
+    guestContainer: {
+        flex: 1,
         justifyContent: 'center',
-        paddingHorizontal: 40,
+        alignItems: 'center',
+        paddingHorizontal: 30,
+        marginHorizontal: 20,
+        backgroundColor: 'rgba(58, 71, 36, 0.8)',
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
     },
-    emptyTitle: {
-        color: '#FFFFFF',
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginTop: 20,
-        ...Platform.select({
-            ios: { fontFamily: 'Times New Roman' },
-            android: { fontFamily: 'serif' },
-        }),
+    guestIconContainer: {
+        width: 80, height: 80,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
     },
-    emptySubtitle: {
-        color: '#E0E0E0',
+    guestIcon: { fontSize: 35 },
+    loginButtonPrimary: {
+        width: '100%',
+        height: 50,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 25,
+    },
+    loginButtonTextPrimary: {
+        color: '#3D3D21',
         fontSize: 16,
-        textAlign: 'center',
-        marginTop: 10,
-        lineHeight: 22,
+        fontWeight: 'bold',
+        ...Platform.select({ ios: { fontFamily: 'Times New Roman' }, android: { fontFamily: 'serif' } })
     },
     sortContainer: {
         flexDirection: 'row',

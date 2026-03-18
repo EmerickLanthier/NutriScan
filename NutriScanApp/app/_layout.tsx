@@ -9,8 +9,9 @@ import { useEffect } from 'react';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+    initialRouteName: '(tabs)',
 };
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -30,8 +31,18 @@ export default function RootLayout() {
 
     return (
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack
+                screenOptions={{
+                    headerShown: false,
+                    gestureEnabled: false,
+                    animation: 'slide_from_right'
+                }}
+            >
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(auth)" />
+
+                {}
+                <Stack.Screen name="edit-profile" />
             </Stack>
             <StatusBar style="auto" />
         </ThemeProvider>

@@ -17,6 +17,10 @@ import { fetchProduct, ProductData } from "@/services/openFoodFacts";
 import { fetchHealthyAlternatives, AlternativeProduct } from "@/services/healthyAlternatives";
 import type { NutriScoreLetter } from "@/services/productQuality";
 
+import { generateRecipesFromGemini, AIRecipe } from "@/services/geminiRecipes";
+import RecipeCard from "@/components/RecipeCard";
+import RecipeStepModal from "@/components/RecipeStepModal";
+
 interface ProductDetailModalProps {
   visible: boolean;
   product: ProductData | null;
@@ -32,12 +36,15 @@ export default function ProductDetailModal({
   const [alternatives, setAlternatives] = useState<AlternativeProduct[]>([]);
   const [loadingAlt, setLoadingAlt] = useState(false);
 
-  // ✅ remplace le “2e modal” par une navigation interne
   const [displayProduct, setDisplayProduct] = useState<ProductData | null>(product);
   const [history, setHistory] = useState<ProductData[]>([]);
   const [loadingDisplayProduct, setLoadingDisplayProduct] = useState(false);
 
-  // reset quand on ouvre/ferme ou quand le product parent change
+  const [recipes, setRecipes] = useState<AIRecipe[]>([]);
+  const [loadingRecipes, setLoadingRecipes] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState<AIRecipe | null>(null);
+  const [recipeModalVisible, setRecipeModalVisible] = useState(false);
+
   useEffect(() => {
     if (!visible) {
       setDisplayProduct(product);
@@ -49,6 +56,8 @@ export default function ProductDetailModal({
     }
     setDisplayProduct(product);
     setHistory([]);
+    setAlternatives([]);
+    setRecipes([]);
   }, [visible, product]);
 
   const score: NutriScoreLetter = useMemo(() => {
@@ -58,45 +67,30 @@ export default function ProductDetailModal({
       : "unknown";
   }, [displayProduct?.nutriscore]);
 
-  // load alternatives (uniquement si D/E)
-  useEffect(() => {
-    if (!displayProduct) {
+  const loadAlternatives = async () => {
+    if (!displayProduct) return;
+    if (score !== "d" && score !== "e") return;
+
+    try {
+      setLoadingAlt(true);
+      const result = await fetchHealthyAlternatives({
+        categoryTag: displayProduct.categoryTag,
+        queryTextFallback: displayProduct.name ?? "produit",
+      });
+      setAlternatives(result);
+    } catch (e) {
+      console.log("Erreur alternatives:", e);
       setAlternatives([]);
+    } finally {
       setLoadingAlt(false);
-      return;
     }
-
-    if (score !== "d" && score !== "e") {
-      setAlternatives([]);
-      return;
-    }
-
-    const load = async () => {
-      try {
-        setLoadingAlt(true);
-
-        const result = await fetchHealthyAlternatives({
-          categoryTag: displayProduct.categoryTag,
-          queryTextFallback: displayProduct.name ?? "produit",
-        });
-
-        setAlternatives(result);
-      } catch (e) {
-        console.log("Erreur alternatives:", e);
-        setAlternatives([]);
-      } finally {
-        setLoadingAlt(false);
-      }
-    };
-
-    load();
-  }, [displayProduct?.barcode, displayProduct?.name, displayProduct?.categoryTag, score]);
+  };
 
   const handleClose = () => {
-    // reset local state
     setDisplayProduct(product);
     setHistory([]);
     setAlternatives([]);
+    setRecipes([]);
     setLoadingAlt(false);
     setLoadingDisplayProduct(false);
     onClose();
@@ -124,12 +118,10 @@ export default function ProductDetailModal({
       const p = await fetchProduct(clean);
 
       if (!p) {
-        // si OFF ne trouve pas, on ne change pas d’écran
         setLoadingDisplayProduct(false);
         return;
       }
 
-      // push current product in history then show new
       setHistory((prev) => [...prev, displayProduct]);
       setDisplayProduct(p);
     } catch (e) {
@@ -137,6 +129,38 @@ export default function ProductDetailModal({
     } finally {
       setLoadingDisplayProduct(false);
     }
+  };
+
+  const loadRecipes = async () => {
+    if (!displayProduct?.name) return;
+
+    try {
+      setLoadingRecipes(true);
+      const nutritionInfo = displayProduct.nutritionRows
+        .map(r => r.label + ": " + r.value + r.unit)
+        .join(", ");
+      const generated = await generateRecipesFromGemini(
+        displayProduct.name,
+        displayProduct.brands,
+        nutritionInfo
+      );
+      setRecipes(generated);
+    } catch (e) {
+      console.log("Erreur recettes Gemini:", e);
+      setRecipes([]);
+    } finally {
+      setLoadingRecipes(false);
+    }
+  };
+
+  const openRecipe = (recipe: AIRecipe) => {
+    setSelectedRecipe(recipe);
+    setRecipeModalVisible(true);
+  };
+
+  const closeRecipeModal = () => {
+    setRecipeModalVisible(false);
+    setSelectedRecipe(null);
   };
 
   if (!displayProduct) return null;
@@ -239,12 +263,18 @@ export default function ProductDetailModal({
               <View style={styles.altSection}>
                 <Text style={styles.sectionTitle}>Alternatives plus saines</Text>
 
-                {loadingAlt && (
-                  <Text style={styles.smallText}>Recherche d’alternatives…</Text>
+                {!loadingAlt && alternatives.length === 0 && (
+                  <TouchableOpacity
+                    style={styles.generateButton}
+                    onPress={loadAlternatives}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.generateButtonText}>🔍 Trouver des alternatives</Text>
+                  </TouchableOpacity>
                 )}
 
-                {!loadingAlt && alternatives.length === 0 && (
-                  <Text style={styles.smallText}>Aucune alternative trouvée.</Text>
+                {loadingAlt && (
+                  <Text style={styles.smallText}>Recherche d'alternatives…</Text>
                 )}
 
                 {alternatives.map((alt) => (
@@ -275,6 +305,38 @@ export default function ProductDetailModal({
                 ))}
               </View>
             )}
+
+            <View style={{ marginTop: 20 }}>
+              <Text style={styles.sectionTitle}>Recettes santé proposées</Text>
+
+              {!loadingRecipes && recipes.length === 0 && (
+                <TouchableOpacity
+                  style={styles.generateButton}
+                  onPress={loadRecipes}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.generateButtonText}>✨ Générer des recettes</Text>
+                </TouchableOpacity>
+              )}
+
+              {loadingRecipes && (
+                <Text style={styles.smallText}>Génération des recettes...</Text>
+              )}
+
+              {recipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onOpenRecipe={openRecipe}
+                />
+              ))}
+            </View>
+
+            <RecipeStepModal
+              visible={recipeModalVisible}
+              recipe={selectedRecipe}
+              onClose={closeRecipeModal}
+            />
           </ScrollView>
         </View>
       </View>
@@ -453,12 +515,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // levels (optionnel)
   levelHigh: { backgroundColor: "rgba(255,0,0,0.06)" },
   levelModerate: { backgroundColor: "rgba(255,165,0,0.06)" },
   levelLow: { backgroundColor: "rgba(0,128,0,0.06)" },
 
-  // alternatives
   altSection: { marginTop: 18 },
   altCard: {
     borderWidth: 1,
@@ -486,5 +546,17 @@ const styles = StyleSheet.create({
   smallText: {
     fontSize: 13,
     color: "#666",
+  },
+  generateButton: {
+    backgroundColor: "#111",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  generateButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
