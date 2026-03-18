@@ -5,7 +5,6 @@ import {
     View,
     TextInput,
     TouchableOpacity,
-    Image,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -34,6 +33,11 @@ export default function EditProfileScreen() {
         };
         loadUserData();
     }, []);
+
+    const getInitial = (name: string) => {
+        if (!name) return '?';
+        return name.charAt(0).toUpperCase();
+    };
 
     const handleSave = async () => {
         if (newPassword !== '') {
@@ -69,7 +73,12 @@ export default function EditProfileScreen() {
 
             if (response.ok) {
                 await AsyncStorage.setItem('userName', username);
-                Alert.alert("Succès", "Votre profil a été mis à jour !", [{ text: "OK", onPress: () => router.back() }]);
+
+                Alert.alert(
+                    "Succès",
+                    "Votre profil a été mis à jour !",
+                    [{ text: "OK", onPress: () => router.back() }]
+                );
             } else {
                 Alert.alert("Erreur", data.message);
             }
@@ -86,6 +95,7 @@ export default function EditProfileScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
             >
+                {}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <Ionicons name="chevron-back" size={28} color="#1A1A1A" />
@@ -96,18 +106,14 @@ export default function EditProfileScreen() {
 
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
 
+                    {}
                     <View style={styles.avatarSection}>
                         <View style={styles.avatarContainer}>
-                            <Image
-                                source={{ uri: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600' }}
-                                style={styles.avatarImage}
-                            />
-                            <TouchableOpacity style={styles.editBadge} activeOpacity={0.8}>
-                                <Ionicons name="camera" size={18} color="#FFF" />
-                            </TouchableOpacity>
+                            <Text style={styles.avatarText}>{getInitial(username)}</Text>
                         </View>
                     </View>
 
+                    {}
                     <View style={styles.formContainer}>
 
                         <Text style={styles.sectionSubtitle}>Informations générales</Text>
@@ -170,6 +176,7 @@ export default function EditProfileScreen() {
 
                 </ScrollView>
 
+                {}
                 <View style={styles.footer}>
                     <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.8}>
                         <Text style={styles.saveButtonText}>Enregistrer les modifications</Text>
@@ -192,9 +199,26 @@ const styles = StyleSheet.create({
     placeholder: { width: 38 },
 
     avatarSection: { alignItems: 'center', marginVertical: 30 },
-    avatarContainer: { position: 'relative', width: 130, height: 130 },
-    avatarImage: { width: '100%', height: '100%', borderRadius: 65, borderWidth: 3, borderColor: '#FFF' },
-    editBadge: { position: 'absolute', bottom: 0, right: 5, backgroundColor: '#1A1A1A', width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#F7F2EE' },
+
+    avatarContainer: {
+        width: 110,
+        height: 110,
+        borderRadius: 55,
+        backgroundColor: '#1A1A1A',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 5,
+    },
+    avatarText: {
+        fontSize: 45,
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+        fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif'
+    },
 
     formContainer: { width: '100%' },
     sectionSubtitle: { fontSize: 18, fontWeight: 'bold', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', color: '#1A1A1A', marginBottom: 15, marginTop: 10 },

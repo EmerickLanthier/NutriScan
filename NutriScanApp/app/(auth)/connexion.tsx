@@ -125,7 +125,6 @@ export default function LoginScreen() {
                                 </TouchableOpacity>
                             </View>
 
-                            {}
                             <Text style={[styles.capsWarningText, { opacity: isCapsOn ? 1 : 0 }]}>
                                 ⚠️ Majuscules activées
                             </Text>
@@ -144,7 +143,8 @@ export default function LoginScreen() {
 
                         <View style={styles.footerContainer}>
                             <Text style={styles.footerText}>Pas encore de compte ? </Text>
-                            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+                            {/* --- C'EST ICI LA CORRECTION --- */}
+                            <TouchableOpacity onPress={() => router.replace('/(auth)/register')}>
                                 <Text style={styles.registerText}>S'inscrire</Text>
                             </TouchableOpacity>
                         </View>

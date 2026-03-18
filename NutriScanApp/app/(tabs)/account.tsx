@@ -4,7 +4,6 @@ import {
     StyleSheet,
     Text,
     View,
-    Image,
     TouchableOpacity,
     ScrollView,
     StatusBar,
@@ -58,6 +57,11 @@ export default function ProfileScreen() {
         router.replace('/(tabs)');
     };
 
+    const getInitial = (name: string) => {
+        if (!name) return '?';
+        return name.charAt(0).toUpperCase();
+    };
+
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -80,7 +84,7 @@ export default function ProfileScreen() {
 
                     <TouchableOpacity
                         style={styles.loginButtonPrimary}
-                        onPress={() => router.push('/connexion')}
+                        onPress={() => router.push('/(auth)/connexion')}
                     >
                         <Text style={styles.loginButtonTextPrimary}>Créer un compte ou se connecter</Text>
                     </TouchableOpacity>
@@ -96,13 +100,11 @@ export default function ProfileScreen() {
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
 
                     <View style={styles.headerSection}>
+                        {}
                         <View style={styles.avatarContainer}>
-                            {/* Remplacement par un avatar générique standard */}
-                            <Image
-                                source={{ uri: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' }}
-                                style={styles.avatarImage}
-                            />
+                            <Text style={styles.avatarText}>{getInitial(username)}</Text>
                         </View>
+
                         <Text style={styles.nameText}>{username}</Text>
                         <Text style={styles.emailText}>{email}</Text>
                     </View>
@@ -186,13 +188,28 @@ const styles = StyleSheet.create({
     },
 
     headerSection: { alignItems: 'center', justifyContent: 'center', paddingVertical: 30 },
+
     avatarContainer: {
-        width: 120, height: 120, borderRadius: 60, overflow: 'hidden',
-        borderWidth: 3, borderColor: '#FFFFFF', shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 5, marginBottom: 15,
-        backgroundColor: '#EAEAEA'
+        width: 110,
+        height: 110,
+        borderRadius: 55,
+        backgroundColor: '#1A1A1A',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        elevation: 5,
+        marginBottom: 15,
     },
-    avatarImage: { width: '100%', height: '100%' },
+    avatarText: {
+        fontSize: 45,
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+        fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif'
+    },
+
     nameText: { fontSize: 26, fontWeight: 'bold', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', color: '#1A1A1A', marginBottom: 5 },
     emailText: { fontSize: 16, fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', color: '#666', fontStyle: 'italic' },
 
