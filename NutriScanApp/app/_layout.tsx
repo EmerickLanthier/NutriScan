@@ -6,15 +6,6 @@ import 'react-native-reanimated';
 import { useFonts } from 'expo-font';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-const linking = {
-    prefixes: ['nutriscanapp://'],
-    config: {
-        screens: {
-            '(auth)/reset-password': 'reset-password',
-        },
-    },
-};
-
 export const unstable_settings = {
     initialRouteName: '(tabs)',
 };
