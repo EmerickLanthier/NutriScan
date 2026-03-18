@@ -36,9 +36,10 @@ exports.handleScan = async (req, res) => {
 
 exports.getHistory = async (req, res) => {
     try {
-        const { sortBy, order } = req.query;
+        const { sortBy, order, search } = req.query;
 
         let sortQuery = { scannedAt: -1 };
+        let filterQuery = {};
 
         if (sortBy) {
             const sortDirection = order === 'asc' ? 1 : -1;
@@ -50,7 +51,11 @@ exports.getHistory = async (req, res) => {
             }
         }
 
-        const history = await History.find().sort(sortQuery);
+        if (search) {
+            filterQuery.name = { $regex: search, $options: 'i' };
+        }
+
+        const history = await History.find(filterQuery).sort(sortQuery);
         res.status(200).json(history);
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
