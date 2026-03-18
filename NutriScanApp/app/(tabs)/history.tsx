@@ -17,6 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 import {router} from "expo-router";
 import NavigationIcons from "@/components/ui/navigation-icons";
 import {API_URL_HISTORY, deleteHistoryItem, getHistoryData} from "@/services/history";
+import ProductDetailModal from '@/components/ProductDetailModal';
+import { ProductData } from '@/services/openFoodFacts';
+import { getFullProductDetails } from '@/services/history';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -40,6 +43,10 @@ export default function HistoryScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [isSearchActive, setIsSearchActive] = useState(false);
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
+    const [isProductLoading, setIsProductLoading] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -75,6 +82,19 @@ export default function HistoryScreen() {
         }
     };
 
+    const handleProductPress = async (barcode: string) => {
+        setIsProductLoading(true);
+        const productDetails = await getFullProductDetails(barcode);
+
+        if (productDetails) {
+            setSelectedProduct(productDetails);
+            setModalVisible(true);
+        } else {
+            Alert.alert("Erreur", "Impossible de récupérer les détails de ce produit.");
+        }
+        setIsProductLoading(false);
+    };
+
     const confirmDelete = (id: string) => {
         Alert.alert(
             "Supprimer",
@@ -101,7 +121,11 @@ export default function HistoryScreen() {
     };
 
     const renderHistoryItem: ListRenderItem<HistoryItem> = ({ item }) => (
-        <View style={styles.historyRow}>
+        <TouchableOpacity
+            style={styles.historyRow}
+            onPress={() => handleProductPress(item.barcode)}
+            activeOpacity={0.7}
+        >
             <View style={styles.productImageContainer}>
                 {item.image ? (
                     <Image source={{ uri: item.image }} style={styles.productImage} />
@@ -131,7 +155,7 @@ export default function HistoryScreen() {
                     <Ionicons name="close" size={32} color="#FF4444" />
                 </TouchableOpacity>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 
     return (
@@ -234,6 +258,22 @@ export default function HistoryScreen() {
                     }
                 />
             )}
+
+            {isProductLoading && (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" color="#FFFFFF" />
+                </View>
+            )}
+
+            <ProductDetailModal
+                visible={modalVisible}
+                product={selectedProduct}
+                onClose={() => {
+                    setModalVisible(false);
+                    setSelectedProduct(null);
+                    fetchHistory();
+                }}
+            />
         </View>
     );
 
@@ -490,5 +530,12 @@ const styles = StyleSheet.create({
     rightAlignedClearButton: {
         marginLeft: 'auto',
         padding: 4,
-    }
+    },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 100,
+    },
 });

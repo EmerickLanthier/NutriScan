@@ -1,4 +1,4 @@
-import { ProductData } from './openFoodFacts';
+import { fetchProduct, ProductData } from './openFoodFacts';
 
 export const API_URL_SCAN = `${process.env.EXPO_PUBLIC_API_URL}/product/scan`
 export const API_URL_HISTORY = `${process.env.EXPO_PUBLIC_API_URL}/product/history`
@@ -54,7 +54,6 @@ export const getHistoryData = async (
         if (url.endsWith('&') || url.endsWith('?')) {
             url = url.slice(0, -1);
         }
-        console.log("URL appelée :", url); // <--- AJOUTE CECI
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -66,4 +65,35 @@ export const getHistoryData = async (
         console.error("Erreur réseau lors de la récupération de l'historique:", error);
         return [];
     }
+};
+
+export const getProductFromDB = async (barcode: string): Promise<ProductData | null> => {
+    try {
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/product/details/${barcode}`);
+        if (response.ok) {
+            return await response.json();
+        }
+        return null;
+    } catch (error) {
+        console.error("Erreur récupération produit DB:", error);
+        return null;
+    }
+};
+
+export const getFullProductDetails = async (barcode: string): Promise<ProductData | null> => {
+    let product = await getProductFromDB(barcode);
+
+    if (product) {
+        console.log("Produit trouvé dans notre BD locale !");
+        return product;
+    }
+
+    console.log("Produit non trouvé en BD, appel à OpenFoodFacts...");
+    product = await fetchProduct(barcode);
+
+    if (product) {
+        await addToHistory(product);
+    }
+
+    return product;
 };
