@@ -8,4 +8,6 @@ router.get('/history', productController.getHistory);
 
 router.delete('/history/:id', productController.deleteFromHistory);
 
+router.get('/details/:barcode', productController.getProductByBarcode);
+
 module.exports = router;

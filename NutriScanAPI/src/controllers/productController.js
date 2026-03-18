@@ -76,3 +76,18 @@ exports.deleteFromHistory = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+exports.getProductByBarcode = async (req, res) => {
+    try {
+        const { barcode } = req.params;
+        const product = await Product.findOne({ barcode: barcode });
+
+        if (product) {
+            res.status(200).json(product);
+        } else {
+            res.status(404).json({ success: false, message: "Produit non trouvé en base" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
