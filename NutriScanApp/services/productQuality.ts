@@ -1,4 +1,3 @@
-// services/productQuality.ts
 export type NutriScoreLetter = "a" | "b" | "c" | "d" | "e" | "unknown";
 
 export type Nutriments = {

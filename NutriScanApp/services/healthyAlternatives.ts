@@ -18,7 +18,6 @@ export async function fetchHealthyAlternatives(params: {
 }): Promise<AlternativeProduct[]> {
   const pageSize = params.pageSize ?? 20;
 
-//construire params + encoder (iOS safe)
 const q: Record<string, string> = {
   search_simple: "1",
   action: "process",
@@ -80,7 +79,6 @@ const res = await fetch(url);
             categories: Array.isArray(p?.categories_tags) ? p.categories_tags : [],
       };
     })
-    // Filtrer les produits avec NutriScore A/B/C
     .filter(
       (p: AlternativeProduct) =>
         p.code &&
@@ -90,11 +88,9 @@ const res = await fetch(url);
       )
     )
 
-  // Prioriser A puis B puis C
   const rank = (s: NutriScoreLetter) => (s === "a" ? 0 : s === "b" ? 1 : 2);
   mapped.sort((x, y) => rank(x.nutriScore) - rank(y.nutriScore));
 
-  // Dédupe par nom de produit et marque
   const seen = new Set<string>();
   return mapped.filter((p: AlternativeProduct) => {
     const key = `${p.name}|${p.brand ?? ""}`.toLowerCase();
