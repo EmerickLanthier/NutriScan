@@ -2,9 +2,9 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import NavigationIcons from '@/components/ui/navigation-icons';
 
 export default function TabLayout() {
     const colorScheme = useColorScheme();
@@ -16,7 +16,14 @@ export default function TabLayout() {
                 tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].icon,
                 tabBarActiveBackgroundColor: Colors[colorScheme ?? 'light'].tabBarBackgroundColor,
                 tabBarInactiveBackgroundColor: Colors[colorScheme ?? 'light'].tabBarBackgroundColor,
-
+                tabBarStyle: {
+                    backgroundColor: Colors[colorScheme ?? 'light'].safeAreaBackground,
+                    borderTopWidth: 0,
+                    elevation: 0,
+                },
+                tabBarItemStyle: {
+                    backgroundColor: 'transparent', // Empêche le changement de fond
+                },
 
                 headerShown: false,
                 tabBarButton: HapticTab,
@@ -25,28 +32,28 @@ export default function TabLayout() {
                 name="index"
                 options={{
                     title: 'Accueil',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+                    tabBarIcon: ({ color }) => <NavigationIcons size={28} name="icons8-home" color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="scanner"
                 options={{
-                    title: 'Scanner',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="barcode" color={color} />,
+                    title: 'Scanneur',
+                    tabBarIcon: ({ color }) => <NavigationIcons size={28} name="barcode_1550324" color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="history"
                 options={{
                     title: 'Historique',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="return" color={color} />,
+                    tabBarIcon: ({ color }) => <NavigationIcons size={28} name="arrow_13371679" color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="account"
                 options={{
                     title: 'Profil',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="circlebadge" color={color} />,
+                    tabBarIcon: ({ color }) => <NavigationIcons size={28} name="codicon--account" color={color} />,
                 }}
             />
         </Tabs>

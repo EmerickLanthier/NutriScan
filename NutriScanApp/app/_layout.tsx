@@ -2,23 +2,49 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+    initialRouteName: '(tabs)',
 };
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+SplashScreen.preventAutoHideAsync();
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+export default function RootLayout() {
+    const colorScheme = useColorScheme();
+
+    const [loaded, error] = useFonts({
+        'IcoMoon': require('@/assets/fonts/icomoon.ttf'),
+    });
+
+    useEffect(() => {
+        if (loaded || error) {
+            SplashScreen.hideAsync();
+        }
+    }, [loaded, error]);
+
+    if (!loaded && !error) return null;
+
+    return (
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack
+                screenOptions={{
+                    headerShown: false,
+                    gestureEnabled: false,
+                    animation: 'slide_from_right'
+                }}
+            >
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(auth)" />
+
+                {}
+                <Stack.Screen name="edit-profile" />
+            </Stack>
+            <StatusBar style="auto" />
+        </ThemeProvider>
+    );
 }

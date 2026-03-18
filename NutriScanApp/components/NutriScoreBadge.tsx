@@ -9,11 +9,11 @@ function label(score: NutriScoreLetter) {
 
 function bg(score: NutriScoreLetter) {
   switch (score) {
-    case "a": return "#1b9e77";
-    case "b": return "#66a61e";
-    case "c": return "#e6ab02";
-    case "d": return "#d95f02";
-    case "e": return "#e7298a";
+    case "a": return "#1E8E3E";
+    case "b": return "#7CB342";
+    case "c": return "#FBC02D";
+    case "d": return "#FB8C00";
+    case "e": return "#E53935";
     default: return "#666";
   }
 }
