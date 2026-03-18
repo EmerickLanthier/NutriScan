@@ -48,13 +48,13 @@ export const getHistoryData = async (
         }
 
         if (search) {
-            url += `search=${encodeURIComponent(search)}&`;
+            url += `?search=${encodeURIComponent(search)}&`;
         }
 
         if (url.endsWith('&') || url.endsWith('?')) {
             url = url.slice(0, -1);
         }
-
+        console.log("URL appelée :", url); // <--- AJOUTE CECI
         const response = await fetch(url);
 
         if (!response.ok) {
