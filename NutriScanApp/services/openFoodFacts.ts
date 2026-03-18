@@ -37,7 +37,6 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
     "categories_tags",
   ].join(",");
 
-  // IMPORTANT: essaie aussi le domaine SANS "world." (certaines configs iOS/proxy aiment moins)
   const urlA = `https://world.openfoodfacts.org/api/v2/product/${cleanBarcode}?fields=${encodeURIComponent(fields)}`;
   const urlB = `https://openfoodfacts.org/api/v2/product/${cleanBarcode}?fields=${encodeURIComponent(fields)}`;
 
@@ -48,7 +47,6 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
         method: "GET",
         headers: {
           Accept: "application/json",
-          // parfois utile pour éviter comportements bizarres côté serveur/proxy
           "Cache-Control": "no-cache",
         },
       });
@@ -59,7 +57,6 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
       const data: any = await res.json();
       return data?.product ?? null;
     } catch (e: any) {
-      // iOS donne souvent juste "Network request failed" => on log plus agressif
       console.log("FETCH ERROR RAW:", e);
       console.log(
         "FETCH ERROR DETAILS:",
@@ -72,7 +69,6 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
   const p = (await tryFetch(urlA)) ?? (await tryFetch(urlB));
   if (!p) return null;
 
-  // ✅ SAFE init
   const rows: NutritionRowData[] = [];
   const n: Record<string, any> = (p?.nutriments ?? {}) as any;
   const levels: Record<string, any> = (p?.nutrient_levels ?? {}) as any;
@@ -116,7 +112,6 @@ export const fetchProduct = async (barcode: string): Promise<ProductData | null>
   const sodiumVal = Number(n["sodium_100g"] ?? 0);
   if (Number.isFinite(sodiumVal) && sodiumVal > 0) addRow("sodium", "Sodium", "g");
 
-  // Prendre le tag "en:" le plus spécifique (le plus long) pour des alternatives précises
   const categoryTag: string | null = Array.isArray(p.categories_tags)
     ? (p.categories_tags
         .filter((t: any) => typeof t === "string" && t.startsWith("en:"))

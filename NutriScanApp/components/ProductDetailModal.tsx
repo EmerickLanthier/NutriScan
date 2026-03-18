@@ -45,7 +45,6 @@ export default function ProductDetailModal({
   const [selectedRecipe, setSelectedRecipe] = useState<AIRecipe | null>(null);
   const [recipeModalVisible, setRecipeModalVisible] = useState(false);
 
-  // reset quand on ouvre/ferme ou quand le product parent change
   useEffect(() => {
     if (!visible) {
       setDisplayProduct(product);
@@ -119,12 +118,10 @@ export default function ProductDetailModal({
       const p = await fetchProduct(clean);
 
       if (!p) {
-        // si OFF ne trouve pas, on ne change pas d’écran
         setLoadingDisplayProduct(false);
         return;
       }
 
-      // push current product in history then show new
       setHistory((prev) => [...prev, displayProduct]);
       setDisplayProduct(p);
     } catch (e) {
@@ -518,12 +515,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // levels (optionnel)
   levelHigh: { backgroundColor: "rgba(255,0,0,0.06)" },
   levelModerate: { backgroundColor: "rgba(255,165,0,0.06)" },
   levelLow: { backgroundColor: "rgba(0,128,0,0.06)" },
 
-  // alternatives
   altSection: { marginTop: 18 },
   altCard: {
     borderWidth: 1,
