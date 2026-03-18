@@ -37,13 +37,22 @@ export const deleteHistoryItem = async (id: string): Promise<boolean> => {
 
 export const getHistoryData = async (
     sortBy?: 'scannedAt' | 'nutriscore' | null,
-    sortOrder: 'asc' | 'desc' = 'desc'
+    sortOrder: 'asc' | 'desc' = 'desc',
+    search: string = ''
 ) => {
     try {
         let url = API_URL_HISTORY;
 
         if (sortBy) {
             url += `?sortBy=${sortBy}&order=${sortOrder}`;
+        }
+
+        if (search) {
+            url += `search=${encodeURIComponent(search)}&`;
+        }
+
+        if (url.endsWith('&') || url.endsWith('?')) {
+            url = url.slice(0, -1);
         }
 
         const response = await fetch(url);

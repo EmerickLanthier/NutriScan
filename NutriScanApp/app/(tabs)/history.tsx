@@ -8,14 +8,15 @@ import {
     TouchableOpacity,
     Dimensions,
     ActivityIndicator,
-    ListRenderItem, Platform
+    ListRenderItem, Platform,
+    Alert,
+    TextInput
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import {router} from "expo-router";
 import NavigationIcons from "@/components/ui/navigation-icons";
 import {API_URL_HISTORY, deleteHistoryItem, getHistoryData} from "@/services/history";
-import { Alert } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -29,8 +30,6 @@ interface HistoryItem {
     favorite?: boolean; // Pour l'US-004
 }
 
-
-
 export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
     const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
@@ -38,11 +37,22 @@ export default function HistoryScreen() {
 
     const [sortBy, setSortBy] = useState<'scannedAt' | 'nutriscore' | null>(null);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [isSearchActive, setIsSearchActive] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const fetchHistory = async () => {
         try {
             setIsLoading(true);
-            const data = await getHistoryData(sortBy, sortOrder);
+            const data = await getHistoryData(sortBy, sortOrder, debouncedSearch);
             setHistoryData(data);
             setIsLoading(false);
         } catch (error) {
@@ -54,7 +64,16 @@ export default function HistoryScreen() {
 
     useEffect(() => {
         fetchHistory();
-    }, [sortBy, sortOrder]);
+    }, [sortBy, sortOrder, debouncedSearch]);
+
+    const handleCloseSearch = () => {
+        if (searchQuery !== '') {
+            setSearchQuery('');
+            setIsSearchActive(false);
+        } else {
+            setIsSearchActive(false);
+        }
+    };
 
     const confirmDelete = (id: string) => {
         Alert.alert(
@@ -121,49 +140,69 @@ export default function HistoryScreen() {
                 <Text style={styles.historyHeaderText}>Historique complet</Text>
             </View>
 
-            <View style={styles.sortContainer}>
-                <Text style={styles.sortLabel}>Trier par :</Text>
+            <View style={styles.controlsContainer}>
 
-                <TouchableOpacity
-                    style={[styles.sortButton, sortBy === 'scannedAt' && styles.activeSortButton]}
-                    onPress={() => setSortBy('scannedAt')}
-                >
-                    <Text style={[styles.sortText, sortBy === 'scannedAt' && styles.activeSortText]}>
-                        Date
-                    </Text>
-                </TouchableOpacity>
+                {isSearchActive ? (
+                    <View style={styles.expandedSearchWrapper}>
+                        <Ionicons name="search" size={20} color="rgba(255,255,255,0.6)" style={styles.searchIcon} />
+                        <TextInput
+                            style={styles.expandedSearchInput}
+                            placeholder="Rechercher..."
+                            placeholderTextColor="rgba(255,255,255,0.5)"
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            returnKeyType="search"
+                            autoFocus={true}
+                        />
+                        <TouchableOpacity onPress={handleCloseSearch} style={styles.rightAlignedClearButton}>
+                            <Ionicons name="close-circle" size={22} color="rgba(255,255,255,0.6)" />
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <>
+                        <TouchableOpacity
+                            onPress={() => setIsSearchActive(true)}
+                            style={styles.collapsedSearchIcon}
+                        >
+                            <Ionicons name="search" size={22} color="#FFFFFF" />
+                        </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.sortButton, sortBy === 'nutriscore' && styles.activeSortButton]}
-                    onPress={() => setSortBy('nutriscore')}
-                >
-                    <Text style={[styles.sortText, sortBy === 'nutriscore' && styles.activeSortText]}>
-                        Nutriscore
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.orderButton}
-                    onPress={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    disabled={!sortBy}
-                >
-                    <Ionicons
-                        name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
-                        size={20}
-                        color={sortBy ? '#FFFFFF' : 'rgba(255,255,255,0.3)'}
-                    />
-                </TouchableOpacity>
-
-                {sortBy && (
-                    <TouchableOpacity
-                        style={styles.clearButton}
-                        onPress={() => {
-                            setSortBy(null);
-                            setSortOrder('desc');
-                        }}
-                    >
-                        <Ionicons name="close-circle" size={24} color="#FF4444" />
-                    </TouchableOpacity>
+                        <Text style={styles.sortLabel}>Trier par :</Text>
+                        <TouchableOpacity
+                            style={[styles.sortButton, sortBy === 'scannedAt' && styles.activeSortButton]}
+                            onPress={() => setSortBy('scannedAt')}
+                        >
+                            <Text style={[styles.sortText, sortBy === 'scannedAt' && styles.activeSortText]}>Date</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.sortButton, sortBy === 'nutriscore' && styles.activeSortButton]}
+                            onPress={() => setSortBy('nutriscore')}
+                        >
+                            <Text style={[styles.sortText, sortBy === 'nutriscore' && styles.activeSortText]}>Nutriscore</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.orderButton}
+                            onPress={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                            disabled={!sortBy}
+                        >
+                            <Ionicons
+                                name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
+                                size={20}
+                                color={sortBy ? '#FFFFFF' : 'rgba(255,255,255,0.3)'}
+                            />
+                        </TouchableOpacity>
+                        {sortBy && (
+                            <TouchableOpacity
+                                style={styles.clearButton}
+                                onPress={() => {
+                                    setSortBy(null);
+                                    setSortOrder('desc');
+                                }}
+                            >
+                                <Ionicons name="close-circle" size={24} color="#FF4444" />
+                            </TouchableOpacity>
+                        )}
+                    </>
                 )}
             </View>
 
@@ -395,5 +434,61 @@ const styles = StyleSheet.create({
         padding: 2,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(58, 71, 36, 0.7)',
+        marginHorizontal: 20,
+        marginTop: 10,
+        paddingHorizontal: 15,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+        height: 45,
+    },
+    searchIcon: {
+        marginRight: 10,
+    },
+    clearSearchButton: {
+        padding: 5,
+        marginLeft: 5,
+    },
+    controlsContainer: {
+        flexDirection: 'row',
+        backgroundColor: 'rgba(58, 71, 36, 0.95)',
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        marginHorizontal: 20,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.1)',
+        gap: 8,
+        height: 55,
+    },
+    collapsedSearchIcon: {
+        padding: 6,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 4,
+    },
+    expandedSearchWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        height: 40,
+    },
+    expandedSearchInput: {
+        flex: 1,
+        color: '#FFFFFF',
+        fontSize: 16,
+        height: '100%',
+    },
+    rightAlignedClearButton: {
+        marginLeft: 'auto',
+        padding: 4,
     }
 });
