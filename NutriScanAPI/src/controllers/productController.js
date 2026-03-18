@@ -34,6 +34,29 @@ exports.handleScan = async (req, res) => {
     }
 };
 
+exports.updateHistory = async (req, res) => {
+    try {
+        const productData = req.body;
+
+        await History.findOneAndUpdate(
+            { barcode: productData.barcode },
+            {
+                $set: {
+                    ...productData, last_updated: Date.now()
+                }
+            },
+            { upsert: true, returnDocument: 'after' }
+        );
+
+        res.status(201).json({
+            success: true,
+            message: "Produit mis à jour dans l'historique"
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
 exports.getHistory = async (req, res) => {
     try {
         const { sortBy, order, search } = req.query;
@@ -84,6 +107,21 @@ exports.getProductByBarcode = async (req, res) => {
 
         if (product) {
             res.status(200).json(product);
+        } else {
+            res.status(404).json({ success: false, message: "Produit non trouvé en base" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.getHistoryByBarcode = async (req, res) => {
+    try {
+        const { barcode } = req.params;
+        const history = await History.findOne({ barcode: barcode });
+
+        if (history) {
+            res.status(200).json(history);
         } else {
             res.status(404).json({ success: false, message: "Produit non trouvé en base" });
         }
