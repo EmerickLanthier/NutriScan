@@ -157,122 +157,126 @@ export default function HistoryScreen() {
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.historyHeaderTitle}>
-                <Text style={styles.historyHeaderText}>Historique complet</Text>
+                <Text style={styles.historyHeaderText}>Historique</Text>
             </View>
 
-            {!isLoggedIn ? (
-                <View style={styles.guestContainer}>
-                    <View style={styles.guestIconContainer}>
-                        <Text style={styles.guestIcon}>🔒</Text>
-                    </View>
-                    <Text style={styles.emptyTitle}>Mode Invité</Text>
-                    <Text style={styles.emptySubtitle}>
-                        Connectez-vous pour sauvegarder vos découvertes et retrouver tout votre historique de scan.
-                    </Text>
-                    <TouchableOpacity
-                        style={styles.loginButtonPrimary}
-                        onPress={() => router.push('/(auth)/connexion')}
-                    >
-                        <Text style={styles.loginButtonTextPrimary}>Créer un compte ou se connecter</Text>
-                    </TouchableOpacity>
-                </View>
-            ) : (
-                <>
-                    <View style={styles.controlsContainer}>
-                        {isSearchActive ? (
-                            <View style={styles.expandedSearchWrapper}>
-                                <Ionicons name="search" size={20} color="rgba(255,255,255,0.6)" style={styles.searchIcon} />
-                                <TextInput
-                                    style={styles.expandedSearchInput}
-                                    placeholder="Rechercher..."
-                                    placeholderTextColor="rgba(255,255,255,0.5)"
-                                    value={searchQuery}
-                                    onChangeText={setSearchQuery}
-                                    returnKeyType="search"
-                                    autoFocus={true}
-                                />
-                                <TouchableOpacity onPress={handleCloseSearch} style={styles.rightAlignedClearButton}>
-                                    <Ionicons name="close-circle" size={22} color="rgba(255,255,255,0.6)" />
-                                </TouchableOpacity>
-                            </View>
-                        ) : (
-                            <>
-                                <TouchableOpacity
-                                    onPress={() => setIsSearchActive(true)}
-                                    style={styles.collapsedSearchIcon}
-                                >
-                                    <Ionicons name="search" size={22} color="#FFFFFF" />
-                                </TouchableOpacity>
-                                <Text style={styles.sortLabel}>Trier :</Text>
-                                <TouchableOpacity
-                                    style={[styles.sortButton, sortBy === 'last_updated' && styles.activeSortButton]}
-                                    onPress={() => setSortBy('last_updated')}
-                                >
-                                    <Text style={[styles.sortText, sortBy === 'last_updated' && styles.activeSortText]}>Date</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.sortButton, sortBy === 'nutriscore' && styles.activeSortButton]}
-                                    onPress={() => setSortBy('nutriscore')}
-                                >
-                                    <Text style={[styles.sortText, sortBy === 'nutriscore' && styles.activeSortText]}>Score</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.orderButton}
-                                    onPress={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                                    disabled={!sortBy}
-                                >
-                                    <Ionicons
-                                        name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
-                                        size={20}
-                                        color={sortBy ? '#FFFFFF' : 'rgba(255,255,255,0.3)'}
-                                    />
-                                </TouchableOpacity>
-                                {sortBy && (
-                                    <TouchableOpacity
-                                        style={styles.clearButton}
-                                        onPress={() => {
-                                            setSortBy(null);
-                                            setSortOrder('desc');
-                                        }}
-                                    >
-                                        <Ionicons name="close-circle" size={24} color="#FF4444" />
-                                    </TouchableOpacity>
-                                )}
-                            </>
-                        )}
-                    </View>
-
-                    {isLoading ? (
-                        <View style={styles.centerContainer}>
-                            <ActivityIndicator size="large" color="#FFFFFF" />
+            <View style={styles.mainContentContainer}>
+                {!isLoggedIn ? (
+                    <View style={styles.guestContainer}>
+                        <View style={styles.guestIconContainer}>
+                            <Text style={styles.guestIcon}>🔒</Text>
                         </View>
-                    ) : (
-                        <FlatList
-                            data={historyData}
-                            keyExtractor={(item) => item._id}
-                            renderItem={renderHistoryItem}
-                            style={styles.flatList}
-                            contentContainerStyle={[
-                                styles.listContent,
-                                historyData.length === 0 && { flex: 1, justifyContent: 'center' }
-                            ]}
-                            onRefresh={checkAuthAndFetchHistory}
-                            refreshing={isLoading}
-                            ListEmptyComponent={
-                                <TouchableOpacity
-                                    style={styles.emptyStateContainer}
-                                    onPress={() => router.push('/scanner')}
-                                    activeOpacity={0.7}
-                                >
-                                    <NavigationIcons size={80} name="barcode_1550324" color="rgba(255,255,255,0.4)" />
-                                    <Text style={styles.emptyTitle}>La liste est vide...</Text>
-                                    <Text style={styles.emptySubtitle}>Pour commencer, scannez un produit !</Text>
-                                </TouchableOpacity>
-                            }
-                        />
-                    )}
-                </>
-            )}
+                        <Text style={styles.emptyTitle}>Mode Invité</Text>
+                        <Text style={styles.emptySubtitle}>
+                            Connectez-vous pour sauvegarder vos découvertes et retrouver tout votre historique de scan.
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.loginButtonPrimary}
+                            onPress={() => router.push('/(auth)/connexion')}
+                        >
+                            <Text style={styles.loginButtonTextPrimary}>Créer un compte ou se connecter</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <>
+                        <View style={styles.controlsContainer}>
+                            {isSearchActive ? (
+                                <View style={styles.expandedSearchWrapper}>
+                                    <Ionicons name="search" size={20} color="rgba(255,255,255,0.6)" style={styles.searchIcon} />
+                                    <TextInput
+                                        style={styles.expandedSearchInput}
+                                        placeholder="Rechercher..."
+                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        value={searchQuery}
+                                        onChangeText={setSearchQuery}
+                                        returnKeyType="search"
+                                        autoFocus={true}
+                                    />
+                                    <TouchableOpacity onPress={handleCloseSearch} style={styles.rightAlignedClearButton}>
+                                        <Ionicons name="close-circle" size={22} color="rgba(255,255,255,0.6)" />
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <>
+                                    <TouchableOpacity
+                                        onPress={() => setIsSearchActive(true)}
+                                        style={styles.collapsedSearchIcon}
+                                    >
+                                        <Ionicons name="search" size={22} color="#FFFFFF" />
+                                    </TouchableOpacity>
+                                    <Text style={styles.sortLabel}>Trier :</Text>
+                                    <TouchableOpacity
+                                        style={[styles.sortButton, sortBy === 'last_updated' && styles.activeSortButton]}
+                                        onPress={() => setSortBy('last_updated')}
+                                    >
+                                        <Text style={[styles.sortText, sortBy === 'last_updated' && styles.activeSortText]}>Date</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[styles.sortButton, sortBy === 'nutriscore' && styles.activeSortButton]}
+                                        onPress={() => setSortBy('nutriscore')}
+                                    >
+                                        <Text style={[styles.sortText, sortBy === 'nutriscore' && styles.activeSortText]}>Score</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.orderButton}
+                                        onPress={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                                        disabled={!sortBy}
+                                    >
+                                        <Ionicons
+                                            name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
+                                            size={20}
+                                            color={sortBy ? '#FFFFFF' : 'rgba(255,255,255,0.3)'}
+                                        />
+                                    </TouchableOpacity>
+                                    {sortBy && (
+                                        <TouchableOpacity
+                                            style={styles.clearButton}
+                                            onPress={() => {
+                                                setSortBy(null);
+                                                setSortOrder('desc');
+                                            }}
+                                        >
+                                            <Ionicons name="close-circle" size={24} color="#FF4444" />
+                                        </TouchableOpacity>
+                                    )}
+                                </>
+                            )}
+                        </View>
+
+                        <View style={styles.listWrapper}>
+                            {isLoading ? (
+                                <View style={styles.loaderContainer}>
+                                    <ActivityIndicator size="large" color="#FFFFFF" />
+                                </View>
+                            ) : (
+                                <FlatList
+                                    data={historyData}
+                                    keyExtractor={(item) => item._id}
+                                    renderItem={renderHistoryItem}
+                                    style={styles.flatList}
+                                    contentContainerStyle={[
+                                        styles.listContent,
+                                        historyData.length === 0 && { flex: 1, justifyContent: 'center' }
+                                    ]}
+                                    onRefresh={checkAuthAndFetchHistory}
+                                    refreshing={isLoading}
+                                    ListEmptyComponent={
+                                        <TouchableOpacity
+                                            style={styles.emptyStateContainer}
+                                            onPress={() => router.push('/scanner')}
+                                            activeOpacity={0.7}
+                                        >
+                                            <NavigationIcons size={80} name="barcode_1550324" color="rgba(255,255,255,0.4)" />
+                                            <Text style={styles.emptyTitle}>La liste est vide...</Text>
+                                            <Text style={styles.emptySubtitle}>Pour commencer, scannez un produit !</Text>
+                                        </TouchableOpacity>
+                                    }
+                                />
+                            )}
+                        </View>
+                    </>
+                )}
+            </View>
 
             {isProductLoading && (
                 <View style={styles.loadingOverlay}>
@@ -294,128 +298,146 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#6B7F45' },
+    container: { flex: 1, backgroundColor: '#769142' },
     historyHeaderTitle: {
-        backgroundColor: '#E0E0E0',
-        padding: 12,
+        backgroundColor: '#e3efdd',
+        padding: 15,
         marginHorizontal: 20,
+        marginTop: 10,
         borderTopLeftRadius: 15,
         borderTopRightRadius: 15,
+        elevation: 3,
+        shadowColor: '#639a27',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
     },
-    historyHeaderText: { fontWeight: 'bold', fontSize: 16, color: '#3D3D21' },
+    historyHeaderText: { fontWeight: '800',
+        fontSize: 24,
+        color: '#3D3D21',
+        textAlign: "center"
+    },
+    mainContentContainer: {
+        flex: 1,
+        marginHorizontal: 20,
+        marginBottom: 20,
+        backgroundColor: 'rgba(58, 71, 36, 0.8)',
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
+        overflow: 'hidden',
+    },
     controlsContainer: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(58, 71, 36, 0.95)',
+        backgroundColor: 'rgba(45, 55, 28, 0.4)',
         paddingHorizontal: 15,
-        paddingVertical: 10,
-        marginHorizontal: 20,
+        paddingVertical: 12,
         alignItems: 'center',
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255,255,255,0.1)',
         gap: 8,
-        height: 55,
+        minHeight: 60,
+    },
+    listWrapper: {
+        flex: 1,
+    },
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     flatList: {
         flex: 1,
-        marginHorizontal: 20,
-        backgroundColor: 'rgba(58, 71, 36, 0.8)',
-        borderBottomLeftRadius: 15,
-        borderBottomRightRadius: 15,
-        overflow: 'hidden'
     },
-    listContent: { paddingHorizontal: 20, paddingTop: 15, paddingBottom: 20 },
+    listContent: {
+        paddingHorizontal: 15,
+        paddingTop: 20,
+        paddingBottom: 30
+    },
     historyRow: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(58, 71, 36, 0.8)',
-        borderRadius: 20,
+        backgroundColor: 'rgba(58, 71, 36, 0.9)',
+        borderRadius: 18,
         padding: 12,
-        marginBottom: 15,
+        marginBottom: 12,
         alignItems: 'center',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)'
     },
-    productImageContainer: { width: 60, height: 60, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 12, overflow: 'hidden' },
+    productImageContainer: { width: 55, height: 55, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 10, overflow: 'hidden' },
     productImage: { width: '100%', height: '100%' },
     placeholderImg: { flex: 1, backgroundColor: '#3A4724' },
-    productDetails: { flex: 1, paddingLeft: 15 },
-    productName: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16, marginBottom: 4 },
-    nutriscoreText: { color: '#E0E0E0', fontSize: 12, fontWeight: 'bold' },
-    actionIcons: { flexDirection: 'row', gap: 10 },
-    iconButton: { padding: 5 },
-    centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    emptyStateContainer: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
+    productDetails: { flex: 1, paddingLeft: 12 },
+    productName: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 15, marginBottom: 4 },
+    nutriscoreText: { color: '#E0E0E0', fontSize: 11, fontWeight: 'bold' },
+    actionIcons: { flexDirection: 'row', gap: 8 },
+    iconButton: { padding: 4 },
+    emptyStateContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
     emptyTitle: {
         color: '#FFFFFF',
         fontSize: 20,
         fontWeight: 'bold',
         marginTop: 20,
+        textAlign: 'center',
         ...Platform.select({ ios: { fontFamily: 'Times New Roman' }, android: { fontFamily: 'serif' } })
     },
-    emptySubtitle: { color: '#E0E0E0', fontSize: 16, textAlign: 'center', marginTop: 10, lineHeight: 22 },
+    emptySubtitle: { color: '#E0E0E0', fontSize: 15, textAlign: 'center', marginTop: 10, lineHeight: 22 },
     guestContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 30,
-        marginHorizontal: 20,
-        backgroundColor: 'rgba(58, 71, 36, 0.8)',
-        borderBottomLeftRadius: 15,
-        borderBottomRightRadius: 15,
     },
     guestIconContainer: {
-        width: 80, height: 80,
+        width: 70, height: 70,
         backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 40,
+        borderRadius: 35,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 20,
     },
-    guestIcon: { fontSize: 35 },
+    guestIcon: { fontSize: 30 },
     loginButtonPrimary: {
         width: '100%',
         height: 50,
         backgroundColor: '#FFFFFF',
-        borderRadius: 20,
+        borderRadius: 15,
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 25,
     },
     loginButtonTextPrimary: {
         color: '#3D3D21',
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: 'bold',
-        ...Platform.select({ ios: { fontFamily: 'Times New Roman' }, android: { fontFamily: 'serif' } })
     },
-    sortLabel: { color: '#E0E0E0', fontSize: 12 },
+    sortLabel: { color: '#E0E0E0', fontSize: 12, marginRight: 2 },
     sortButton: {
         paddingVertical: 6,
-        paddingHorizontal: 12,
+        paddingHorizontal: 10,
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: 15,
+        borderRadius: 12,
     },
     activeSortButton: { backgroundColor: '#FFFFFF' },
-    sortText: { color: '#E0E0E0', fontSize: 12, fontWeight: 'bold' },
+    sortText: { color: '#E0E0E0', fontSize: 11, fontWeight: 'bold' },
     activeSortText: { color: '#3A4724' },
     orderButton: { padding: 4, marginLeft: 'auto' },
     clearButton: { padding: 2 },
-    searchIcon: {
-        marginRight: 10,
-    },
-    collapsedSearchIcon: { padding: 6, marginRight: 4 },
+    searchIcon: { marginRight: 8 },
+    collapsedSearchIcon: { padding: 6, marginRight: 2 },
     expandedSearchWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
         paddingHorizontal: 12,
-        borderRadius: 20,
+        borderRadius: 15,
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        height: 40,
+        height: 38,
     },
-    expandedSearchInput: { flex: 1, color: '#FFFFFF', fontSize: 16 },
+    expandedSearchInput: { flex: 1, color: '#FFFFFF', fontSize: 14 },
     rightAlignedClearButton: { marginLeft: 'auto', padding: 4 },
     loadingOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.6)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 100,
