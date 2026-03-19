@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     StyleSheet,
     View,
@@ -7,301 +8,222 @@ import {
     Image,
     TouchableOpacity,
     Dimensions,
+    ActivityIndicator,
     ListRenderItem,
-    Modal
+    Platform
 } from 'react-native';
-import {SafeAreaProvider, useSafeAreaInsets} from "react-native-safe-area-context";
-import {Ionicons} from '@expo/vector-icons';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from '@expo/vector-icons';
+import { router } from "expo-router";
+import NavigationIcons from "@/components/ui/navigation-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const {height: SCREEN_HEIGHT} = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-interface Product {
-    id: string;
+interface HistoryItem {
+    _id: string;
+    barcode: string;
     name: string;
-    score: string;
-    favorite: boolean;
-    image?: string;
-    categoryId: string;
+    image: string;
+    nutriscore: string;
+    scannedAt: string;
+    favorite?: boolean;
 }
 
-interface Category {
-    id: string;
-    name: string;
-}
+const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/product/history`;
 
-const CATEGORIES = [
-    {id: '1', name: 'Fruits et Légumes'},
-    {id: '2', name: 'Produits Céréaliers'},
-    {id: '3', name: 'Produits Laitiers'},
-    {id: '4', name: 'Viandes'},
-    {id: '5', name: 'Sucreries'},
-    {id: '6', name: 'Autre'}
-];
-
-const INITIAL_DATA: Product[] = [
-    {id: '1', name: 'Doritos', score: 'D', favorite: true, categoryId: '5'},
-    {id: '2', name: 'Pommes', score: 'A', favorite: true, categoryId: '1'},
-    {id: '3', name: 'Lait', score: 'B', favorite: false, categoryId: '3'},
-    {id: '4', name: 'Poulet', score: 'C', favorite: true, categoryId: '4'},
-    {id: '5', name: 'Bonbons', score: 'E', favorite: true, categoryId: '5'},
-    {id: '6', name: 'Yaourt', score: 'B', favorite: false, categoryId: '3'},
-    {id: '7', name: 'Riz', score: 'A', favorite: true, categoryId: '2'},
-];
-
-function NutritionScreen() {
+export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
-    const [historyData, setHistoryData] = useState<Product[]>(INITIAL_DATA);
-    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+    const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
 
-    const deleteProduct = (idToDelete: string) => {
-        setHistoryData(currentList =>
-            currentList.filter(item => item.id !== idToDelete)
-        );
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    const checkAuthAndFetchHistory = async () => {
+        setIsLoading(true);
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+
+            if (token) {
+                setIsLoggedIn(true);
+
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setHistoryData(data);
+                } else {
+                    console.error("Erreur API:", await response.text());
+                }
+            } else {
+                setIsLoggedIn(false);
+            }
+        } catch (error) {
+            console.error("Erreur lors du chargement:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const toggleFavorite = (idToToggle: string) => {
-        setHistoryData(currentList =>
-            currentList.map(item =>
-                item.id === idToToggle
-                    ? {...item, favorite: !item.favorite} // On inverse le favori
-                    : item
-            )
-        );
-    };
+    useFocusEffect(
+        useCallback(() => {
+            checkAuthAndFetchHistory();
+        }, [])
+    );
 
-    const renderHistoryItem: ListRenderItem<Product> = ({item}) => (
+    const renderHistoryItem: ListRenderItem<HistoryItem> = ({ item }) => (
         <View style={styles.historyRow}>
             <View style={styles.productImageContainer}>
                 {item.image ? (
-                    <Image source={{uri: item.image}} style={styles.productImage}/>
+                    <Image source={{ uri: item.image }} style={styles.productImage} />
                 ) : (
-                    <View style={styles.placeholderImg}/>
+                    <View style={styles.placeholderImg} />
                 )}
             </View>
-
             <View style={styles.productDetails}>
-                <Text style={styles.productName}>{item.name}</Text>
-                <Image
-                    source={{uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Nutri-score-B.svg/1200px-Nutri-score-B.svg.png'}}
-                    style={styles.nutriscoreImg}
-                    resizeMode="contain"
-                />
+                <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
             </View>
-
             <View style={styles.actionIcons}>
-                <TouchableOpacity onPress={() => toggleFavorite(item.id)}
-                                  style={styles.iconButton}>
-                    <Ionicons
-                        name={item.favorite ? "star" : "star-outline"}
-                        size={32}
-                        color="#FFD700"
-                    />
+                <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="star-outline" size={28} color="#FFD700" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteProduct(item.id)}
-                                  style={styles.iconButton}>
-                    <Ionicons name="close" size={36} color="#FF4444"/>
+                <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="close" size={32} color="#FF4444" />
                 </TouchableOpacity>
             </View>
         </View>
     );
 
-    const filteredProducts = selectedCategory
-        ? historyData.filter(p => p.categoryId === selectedCategory.id)
-        : [];
+    if (isLoading) {
+        return (
+            <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center' }]}>
+                <ActivityIndicator size="large" color="#FFFFFF" />
+            </View>
+        );
+    }
 
     return (
-        <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
-            <Modal
-                animationType="slide"
-                transparent={false}
-                visible={selectedCategory !== null}
-                onRequestClose={() => setSelectedCategory(null)}
-            >
-                <View style={[styles.modalContainer, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
-                    <View style={styles.modalHeader}>
-                        <TouchableOpacity onPress={() => setSelectedCategory(null)} style={styles.backButton}>
-                            <Ionicons name="arrow-back" size={28} color="#3D3D29"/>
-                        </TouchableOpacity>
-                        <Text style={styles.modalTitle}>
-                            {selectedCategory?.name}
-                        </Text>
-                        <View style={{width: 28}}/>
-                    </View>
-
-                    {filteredProducts.length > 0 ? (
-                        <FlatList
-                            data={filteredProducts}
-                            keyExtractor={(item) => item.id}
-                            renderItem={renderHistoryItem}
-                            contentContainerStyle={styles.listContent}
-                        />
-                    ) : (
-                        <View style={styles.emptyState}>
-                            <Text style={styles.emptyText}>Aucun produit dans cette catégorie</Text>
-                        </View>
-                    )}
-                </View>
-            </Modal>
-
-            <View style={styles.headerSection}>
-                <Text style={styles.sectionTitle}>Categories</Text>
-                <View style={styles.grid}>
-                    {CATEGORIES.map((cat) => (
-                        <TouchableOpacity
-                            key={cat.id}
-                            style={styles.categoryCard}
-                            onPress={() => setSelectedCategory(cat)}
-                        >
-                            <Text style={styles.categoryText}>{cat.name}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            </View>
-
+        <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.historyHeaderTitle}>
                 <Text style={styles.historyHeaderText}>Historique complet</Text>
             </View>
 
-            <FlatList
-                data={historyData}
-                keyExtractor={(item) => item.id}
-                renderItem={renderHistoryItem}
-                style={styles.flatList}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-            />
+            {!isLoggedIn ? (
+                <View style={styles.guestContainer}>
+                    <View style={styles.guestIconContainer}>
+                        <Text style={styles.guestIcon}>🔒</Text>
+                    </View>
+                    <Text style={styles.emptyTitle}>Mode Invité</Text>
+                    <Text style={styles.emptySubtitle}>
+                        Connectez-vous pour sauvegarder vos découvertes et retrouver tout votre historique de scan.
+                    </Text>
+                    <TouchableOpacity
+                        style={styles.loginButtonPrimary}
+                        onPress={() => router.push('/(auth)/connexion')}
+                    >
+                        <Text style={styles.loginButtonTextPrimary}>Créer un compte ou se connecter</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <FlatList
+                    data={historyData}
+                    keyExtractor={(item) => item._id}
+                    renderItem={renderHistoryItem}
+                    style={styles.flatList}
+                    contentContainerStyle={[
+                        styles.listContent,
+                        historyData.length === 0 && { flex: 1, justifyContent: 'center' }
+                    ]}
+                    onRefresh={checkAuthAndFetchHistory}
+                    refreshing={isLoading}
+                    ListEmptyComponent={
+                        <TouchableOpacity
+                            style={styles.emptyStateContainer}
+                            onPress={() => router.push('/scanner')}
+                            activeOpacity={0.7}
+                        >
+                            <NavigationIcons size={80} name="barcode_1550324" color="rgba(255,255,255,0.4)" />
+                            <Text style={styles.emptyTitle}>La liste est vide...</Text>
+                            <Text style={styles.emptySubtitle}>Pour commencer, scannez un produit !</Text>
+                        </TouchableOpacity>
+                    }
+                />
+            )}
         </View>
-    )
-        ;
-}
-
-export default function App() {
-    return (
-        <SafeAreaProvider>
-            <NutritionScreen/>
-        </SafeAreaProvider>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F5F0',
-    },
-    headerSection: {
-        padding: 20,
-        height: SCREEN_HEIGHT * 0.35,
-    },
-    sectionTitle: {fontSize: 22, fontWeight: '900', marginBottom: 15},
-    grid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-    },
-    categoryCard: {
-        width: '30%',
-        height: 70,
-        backgroundColor: '#DCDCDC',
-        borderRadius: 12,
-        marginBottom: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden'
-    },
-    catImg: {...StyleSheet.absoluteFillObject, opacity: 0.6},
-    categoryText: {fontSize: 10, fontWeight: 'bold', color: '#000', textAlign: 'center'},
-
+    container: { flex: 1, backgroundColor: '#6B7F45' },
     historyHeaderTitle: {
         backgroundColor: '#E0E0E0',
         padding: 12,
-        marginHorizontal: 15,
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
-    },
-    historyHeaderText: {fontWeight: 'bold', fontSize: 16},
-
-    flatList: {
-        flex: 1,
-        marginHorizontal: 15,
-        backgroundColor: '#8E8E8E',
-        marginBottom: 70,
-    },
-    listContent: {
-        paddingBottom: 20,
-    },
-    historyRow: {
-        flexDirection: 'row',
-        height: 85,
-        borderBottomWidth: 1,
-        borderBottomColor: '#777',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-    },
-    productImageContainer: {
-        width: 65,
-        height: 65,
-        backgroundColor: '#555',
-        borderRadius: 5,
-    },
-    productImage: {width: '100%', height: '100%', borderRadius: 5},
-    placeholderImg: {flex: 1, backgroundColor: '#666'},
-    productDetails: {
-        flex: 1,
-        paddingLeft: 15,
-    },
-    productName: {color: 'white', fontWeight: 'bold', fontSize: 14, marginBottom: 5},
-    nutriscoreImg: {width: 70, height: 25},
-    actionIcons: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 15,
-        paddingRight: 5
-    },
-    iconButton: {
-        padding: 5,
-    },
-    bottomTab: {
-        flexDirection: 'row',
-        backgroundColor: '#3D3D29',
-        height: 70,
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        justifyContent: 'space-around',
-        alignItems: 'center',
+        marginHorizontal: 20,
         borderTopLeftRadius: 15,
         borderTopRightRadius: 15,
     },
-    modalContainer: {
+    historyHeaderText: { fontWeight: 'bold', fontSize: 16, color: '#3D3D21' },
+    flatList: {
         flex: 1,
-        backgroundColor: '#F5F5F0',
+        marginHorizontal: 20,
+        backgroundColor: 'rgba(58, 71, 36, 0.8)',
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
+        overflow: 'hidden'
     },
-    modalHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
-        backgroundColor: '#fff'
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '900',
-        color: '#3D3D29',
-    },
-    backButton: {
-        padding: 5,
-    },
-    emptyState: {
+    listContent: { paddingHorizontal: 20, paddingTop: 15, paddingBottom: 20, zIndex: 10 },
+
+    historyRow: { flexDirection: 'row', backgroundColor: 'rgba(58, 71, 36, 0.8)', borderRadius: 20, padding: 12, marginBottom: 15, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    productImageContainer: { width: 60, height: 60, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 12, overflow: 'hidden' },
+    productImage: { width: '100%', height: '100%' },
+    placeholderImg: { flex: 1, backgroundColor: '#3A4724' },
+    productDetails: { flex: 1, paddingLeft: 15 },
+    productName: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16, marginBottom: 4 },
+    actionIcons: { flexDirection: 'row', gap: 10 },
+    iconButton: { padding: 5 },
+
+    emptyStateContainer: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
+    emptyTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold', marginTop: 20, ...Platform.select({ ios: { fontFamily: 'Times New Roman' }, android: { fontFamily: 'serif' } }) },
+    emptySubtitle: { color: '#E0E0E0', fontSize: 16, textAlign: 'center', marginTop: 10, lineHeight: 22 },
+
+    guestContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 50
+        paddingHorizontal: 30,
+        marginHorizontal: 20,
+        backgroundColor: 'rgba(58, 71, 36, 0.8)',
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
     },
-    emptyText: {
+    guestIconContainer: {
+        width: 80, height: 80,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    guestIcon: { fontSize: 35 },
+    loginButtonPrimary: {
+        width: '100%',
+        height: 50,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 25,
+    },
+    loginButtonTextPrimary: {
+        color: '#3D3D21',
         fontSize: 16,
-        color: '#888',
-        fontStyle: 'italic'
-    }
+        fontWeight: 'bold',
+        ...Platform.select({ ios: { fontFamily: 'Times New Roman' }, android: { fontFamily: 'serif' } })
+    },
 });
