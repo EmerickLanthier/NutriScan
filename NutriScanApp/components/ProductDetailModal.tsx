@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Platform,
 } from "react-native";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -381,7 +382,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    backgroundColor: "#fff",
+    backgroundColor: "#F7F2EE",
     height: "85%",
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
