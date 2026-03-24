@@ -22,7 +22,7 @@ Nutriscan est une application mobile développé en React.js qui permet aux util
 
 ---
 
-## 📁 Structure du projet (Version 1.0, va changer avec le temps)
+## 📁 Structure du projet finale
 
 ### backend
 
@@ -117,6 +117,52 @@ NutriScanApp/
 ├── tsconfig.json
 └── README.md
 ```
+## ⚠️⚠️⚠️ Étapes d'installation
+1. Configuration du Backend (NutriScanAPI)
+Accédez au dossier de l'API :
+
+Dans le terminal:
+cd NutriScanAPI
+Créez un fichier .env à la racine de ce dossier (Assurez-vous qu'il ne soit jamais commité sur GitHub).
+
+Ajoutez les variables d'environnement suivantes dans le fichier .env :
+
+Code snippet
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=<INSÉREZ_LA_CHAÎNE_DE_CONNEXION_FOURNIE_PAR_LE_COLLÈGUE>
+(Note : L'URL de la base de données MongoDB vous sera fournie en privé par l'équipe).
+
+Lancez le serveur localement :
+
+Dans le terminal:
+npm start
+
+2. Configuration du Frontend (NutriScanApp)
+Ouvrez un nouveau terminal et accédez au dossier de l'application :
+
+Bash
+cd NutriScanApp
+Créez un fichier .env (vous pouvez vous baser sur le fichier .env.example).
+
+Trouvez votre adresse IP locale (IPv4) :
+
+Ouvrez l'invite de commande (Command Prompt) et tapez ipconfig.
+
+Repérez la ligne IPv4 Address (ex: 192.168.10.190).
+
+Ajoutez les variables suivantes dans votre fichier .env :
+
+Code snippet
+EXPO_PUBLIC_API_URL=http://<VOTRE_ADRESSE_IPV4_LOCALE>:5000/api
+EXPO_PUBLIC_GEMINI_API_KEY=<LA_CLÉ_API_GEMINI>
+⚠️ Important : N'oubliez pas d'ajouter /api à la fin de l'URL de votre API et assurez-vous de bien utiliser votre propre adresse IPv4.
+
+Lancez l'application mobile :
+
+Dans le terminal:
+npx expo start -c
+
 
 ## ⚙️ Règles de gestion
 
