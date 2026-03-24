@@ -12,7 +12,7 @@ exports.handleScan = async (req, res) => {
 
         await Product.findOneAndUpdate(
             {barcode: productData.barcode},
-            {$set: {...productData, last_updated: Date.now}},
+            {$set: {...productData, last_updated: Date.now()}},
             {upsert: true, returnDocument: `after`}
         );
 
@@ -23,7 +23,7 @@ exports.handleScan = async (req, res) => {
                 $set: {
                     ...productData,
                     userId: userId,
-                    last_updated: Date.now
+                    last_updated: Date.now()
                 }
             },
             {upsert: true, returnDocument: `after`}
