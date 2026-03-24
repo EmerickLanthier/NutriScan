@@ -4,6 +4,7 @@ const History = require('../models/History');
 exports.handleScan = async (req, res) => {
     console.log("--- Route /handleScan appelée ---");
     console.log("Body reçu :", req.body);
+
     try {
 
         const productData = req.body;
@@ -12,14 +13,20 @@ exports.handleScan = async (req, res) => {
         await Product.findOneAndUpdate(
             { barcode: productData.barcode },
             { $set: { ...productData, last_updated: Date.now() } },
-            { upsert: true, returnDocument: 'after' }
+            { upsert: true, returnDocument: `after` }
         );
 
 
         await History.findOneAndUpdate(
-            { userId, barcode: productData.barcode },
-            { $set: { ...productData, last_updated: Date.now() } },
-            { upsert: true, returnDocument: 'after' }
+            { barcode: productData.barcode, userId: userId },
+            {
+                $set: {
+                    ...productData,
+                    userId: userId,
+                    last_updated: Date.now()
+                }
+            },
+            { upsert: true,  returnDocument: `after` }
         );
 
         res.status(201).json({
@@ -30,6 +37,7 @@ exports.handleScan = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
 
 exports.toggleFavorite = async (req, res) => {
     try {
