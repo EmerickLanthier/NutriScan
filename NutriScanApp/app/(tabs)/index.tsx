@@ -65,7 +65,7 @@ function HomeContent() {
                 <View style={styles.glassCard}>
                     <View style={styles.imagePlaceholder}>
                         <Image
-                            source={{ uri: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1000&auto=format&fit=crop' }}
+                            source={require('@/assets/images/meal.png')}
                             style={styles.featuredImage}
                         />
                         <View style={styles.imageOverlay} />
