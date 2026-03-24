@@ -112,13 +112,13 @@ export default function ProfileScreen() {
                     <View style={styles.sectionContainer}>
                         <Text style={styles.sectionTitle}>Mes Découvertes</Text>
                         <View style={styles.cardsContainer}>
-                            <TouchableOpacity style={styles.card} activeOpacity={0.8}>
-                                <Text style={styles.cardEmoji}>🍎</Text>
-                                <Text style={styles.cardText}>Aliments{'\n'}Favoris</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.card} activeOpacity={0.8}>
-                                <Text style={styles.cardEmoji}>📖</Text>
-                                <Text style={styles.cardText}>Recettes{'\n'}Favorites</Text>
+                            <TouchableOpacity
+                                style={[styles.card, { width: '100%' }]}
+                                activeOpacity={0.8}
+                                onPress={() => router.push('/favorites')}
+                            >
+                                <Text style={styles.cardEmoji}>⭐</Text>
+                                <Text style={styles.cardText}>Mes Aliments Favoris</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

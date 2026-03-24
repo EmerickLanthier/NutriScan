@@ -1,13 +1,23 @@
 import { fetchProduct, ProductData } from './openFoodFacts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const API_URL_SCAN = `${process.env.EXPO_PUBLIC_API_URL}/product/scan`
 export const API_URL_HISTORY = `${process.env.EXPO_PUBLIC_API_URL}/product/history`
 
+const getAuthHeaders = async () => {
+    const token = await AsyncStorage.getItem('userToken');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+};
+
 export const addToHistory = async (product: ProductData) => {
     try {
+        const headers = await getAuthHeaders();
         const response = await fetch(API_URL_SCAN, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: headers,
             body: JSON.stringify(product),
         });
         return await response.json();
@@ -18,53 +28,59 @@ export const addToHistory = async (product: ProductData) => {
 
 export const deleteHistoryItem = async (id: string): Promise<boolean> => {
     try {
+        const headers = await getAuthHeaders();
         const response = await fetch(`${API_URL_HISTORY}/${id}`, {
             method: 'DELETE',
+            headers: headers
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Erreur backend suppression:", errorData.error);
-            return false;
-        }
-
+        if (!response.ok) return false;
         return true;
     } catch (error) {
         console.error("Erreur réseau lors de la suppression:", error);
         return false;
     }
 };
-
 export const getHistoryData = async (
     sortBy?: 'last_updated' | 'nutriscore' | null,
     sortOrder: 'asc' | 'desc' = 'desc',
     search: string = ''
 ) => {
     try {
-        let url = API_URL_HISTORY;
+        const headers = await getAuthHeaders();
+        const params = new URLSearchParams();
 
         if (sortBy) {
-            url += `?sortBy=${sortBy}&order=${sortOrder}`;
+            params.append('sortBy', sortBy);
+            params.append('order', sortOrder);
         }
-
         if (search) {
-            url += `?search=${encodeURIComponent(search)}&`;
+            params.append('search', search);
         }
 
-        if (url.endsWith('&') || url.endsWith('?')) {
-            url = url.slice(0, -1);
-        }
-        const response = await fetch(url);
+        const queryString = params.toString();
+        const url = queryString ? `${API_URL_HISTORY}?${queryString}` : API_URL_HISTORY;
+        const response = await fetch(url, { headers });
 
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Réponse serveur non-OK:", errorText);
             throw new Error(`Erreur HTTP: ${response.status}`);
         }
-
         return await response.json();
     } catch (error) {
         console.error("Erreur réseau lors de la récupération de l'historique:", error);
         return [];
     }
+};
+
+export const toggleFavorite = async (id: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL_HISTORY}/${id}/favorite`, {
+        method: 'POST',
+        headers
+    });
+    return await response.json();
 };
 
 export const getProductFromDB = async (barcode: string): Promise<ProductData | null> => {
@@ -98,4 +114,18 @@ export const getFullProductDetails = async (barcode: string): Promise<ProductDat
     }
 
     return product;
+};
+
+export const getFavoritesData = async () => {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/product/favorites`, { headers });
+
+        if (!response.ok) throw new Error("Erreur lors de la récupération des favoris");
+
+        return await response.json();
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
 };
