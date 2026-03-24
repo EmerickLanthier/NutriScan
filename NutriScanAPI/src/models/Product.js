@@ -7,7 +7,7 @@ const nutritionRowSchema = new mongoose.Schema({
     bold: Boolean,
     subItem: Boolean,
     level: String
-}, { _id: false });
+}, {_id: false});
 
 const productSchema = new mongoose.Schema({
     barcode: {
@@ -16,11 +16,11 @@ const productSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
-    name: { type: String, required: true },
-    image: { type: String },
-    brands: { type: String },
-    quantity: { type: String },
-    labels: [{ type: String }],
+    name: {type: String, required: true},
+    image: {type: String},
+    brands: {type: String},
+    quantity: {type: String},
+    labels: [{type: String}],
     nutriscore: {
         type: String,
         lowercase: true,
@@ -28,8 +28,8 @@ const productSchema = new mongoose.Schema({
     },
     nutritionRows: [nutritionRowSchema],
 
-    categoryTags: [{ type: String }],
-    last_updated: { type: Date, default: Date.now }
+    categoryTags: [{type: String}],
+    last_updated: {type: Date, default: Date.now}
 });
 
 module.exports = mongoose.model('Product', productSchema);
