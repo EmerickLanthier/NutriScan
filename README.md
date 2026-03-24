@@ -24,62 +24,97 @@ Nutriscan est une application mobile développé en React.js qui permet aux util
 
 ## 📁 Structure du projet (Version 1.0, va changer avec le temps)
 
+### backend
+
+```
+NutriScanAPI/
+├── src/
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   └── productController.js
+│   ├── middleware/
+│   │   └── auth.js
+│   ├── models/
+│   │   ├── History.js
+│   │   ├── Product.js
+│   │   ├── Recipe.js
+│   │   └── User.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   └── product.routes.js
+│   └── server.js
+├── tests/
+│   └── README.md
+├── .env
+├── .gitignore
+├── package.json
+└── package-lock.json
+```
+
 ### frontend
 
 ```
-nutriscan-frontend/
+NutriScanApp/
+├── .expo/
+├── .vscode/
+├── app/
+│   ├── (auth)/
+│   │   ├── connexion.tsx
+│   │   ├── forgotPassword.tsx
+│   │   └── register.tsx
+│   ├── (tabs)/
+│   │   ├── _layout.tsx
+│   │   ├── account.tsx
+│   │   ├── history.tsx
+│   │   ├── index.tsx
+│   │   └── scanner.tsx
+│   ├── _layout.tsx
+│   ├── edit-profile.tsx
+│   ├── favorites.tsx
+│   └── modal.tsx
 ├── assets/
-│   └── images, icônes, polices
-├── src/
-│   ├── components/
-│   │   └── composants réutilisables 
-│   ├── screens/
-│   │   ├── ScanScreen/
-│   │   ├── ProductScreen/
-│   │   ├── AlternativesScreen/
-│   │   └── SettingsScreen/
-│   ├── navigation/
-│   │   └── configuration des routes 
-│   ├── services/
-│   │   └── apiClient.ts          // appels vers le backend
-│   ├── storage/
-│   │   └── productCache.ts       // cache local
-│   ├── models/
-│   │   └── product.ts            // types / interfaces
-│   ├── outils/
-│   │   └── helpers 
-│   ├── context/
-│   │   └── état global 
-│   ├── App.tsx
-│   └── index.ts
-├── tests/
-│   └── tests UI / logique
-├── package.json
-└── fichiers de configuration
-```
-
-### backendà
-
-```
-nutriscan-backend/
-├── src/
-│   ├── routes/
-│   │   └── product.routes.js     // /api/product/:barcode, /api/alternatives
-│   ├── controllers/
-│   │   └── product.controller.js 
-│   ├── services/
-│   │   └── off.service.js       
-│   ├── middleware/
-│   │   └── errorHandler.js       // gestion des erreurs
-│   ├── utils/
-│   │   └── mapper.js            
-│   ├── config/
-│   │   └── env.js                
-│   └── server.js
-├── tests/
-│   └── tests d’API 
+│   ├── fonts/
+│   │   └── icomoon.ttf
+│   ├── images/
+│   └── selection.json
+├── components/
+│   ├── ui/
+│   ├── external-link.tsx
+│   ├── haptic-tab.tsx
+│   ├── HealthWarning.tsx
+│   ├── hello-wave.tsx
+│   ├── NutriScoreBadge.tsx
+│   ├── parallax-scroll-view.tsx
+│   ├── ProductDetailModal.tsx
+│   ├── RecipeCard.tsx
+│   ├── RecipeStepModal.tsx
+│   ├── themed-text.tsx
+│   └── themed-view.tsx
+├── constants/
+│   └── theme.ts
+├── hooks/
+│   ├── use-color-scheme.ts
+│   ├── use-color-scheme.web.ts
+│   └── use-theme-color.ts
+├── scripts/
+│   └── reset-project.js
+├── services/
+│   ├── geminiRecipes.ts
+│   ├── healthyAlternatives.ts
+│   ├── history.ts
+│   ├── openFoodFacts.ts
+│   ├── productQuality.ts
+│   └── recipeStorage.ts
+├── .env
 ├── .env.example
+├── .gitignore
+├── app.json
+├── eslint.config.js
+├── expo-env.d.ts
 ├── package.json
+├── package-lock.json
+├── react-native.config.js
+├── tsconfig.json
 └── README.md
 ```
 
