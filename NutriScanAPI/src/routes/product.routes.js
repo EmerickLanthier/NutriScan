@@ -1,15 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
+const auth = require('../middleware/auth');
 
-router.post('/scan', productController.handleScan);
+router.post('/scan', auth, productController.handleScan);
 
-router.get('/history', productController.getHistory);
+router.get('/history', auth, productController.getHistory);
 
-router.delete('/history/:id', productController.deleteFromHistory);
+router.delete('/history/:id', auth, productController.deleteFromHistory);
 
-router.get('/details/:barcode', productController.getProductByBarcode);
+router.get('/details/:barcode', auth, productController.getProductByBarcode);
 
-router.post('/update', productController.updateHistory)
+router.post('/update', auth, productController.updateHistory)
 
+router.post('/history/:id/favorite', auth, productController.toggleFavorite);
+
+router.get('/favorites', auth, productController.getFavorites);
 module.exports = router;

@@ -4,25 +4,29 @@ const History = require('../models/History');
 exports.handleScan = async (req, res) => {
     console.log("--- Route /handleScan appelée ---");
     console.log("Body reçu :", req.body);
+
     try {
 
         const productData = req.body;
+        const userId = req.user.id;
 
         await Product.findOneAndUpdate(
             { barcode: productData.barcode },
             { $set: { ...productData, last_updated: Date.now() } },
-            { upsert: true, returnDocument: 'after' }
+            { upsert: true, returnDocument: `after` }
         );
 
 
         await History.findOneAndUpdate(
-            { barcode: productData.barcode },
+            { barcode: productData.barcode, userId: userId },
             {
                 $set: {
-                    ...productData, last_updated: Date.now()
+                    ...productData,
+                    userId: userId,
+                    last_updated: Date.now()
                 }
             },
-            { upsert: true, returnDocument: 'after' }
+            { upsert: true,  returnDocument: `after` }
         );
 
         res.status(201).json({
@@ -33,6 +37,7 @@ exports.handleScan = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
 
 exports.updateHistory = async (req, res) => {
     try {
@@ -60,9 +65,10 @@ exports.updateHistory = async (req, res) => {
 exports.getHistory = async (req, res) => {
     try {
         const { sortBy, order, search } = req.query;
+        const userId = req.user.id;
 
         let sortQuery = { last_updated: -1 };
-        let filterQuery = {};
+        let filterQuery = {userId: userId};
 
         if (sortBy) {
             const sortDirection = order === 'asc' ? 1 : -1;
@@ -88,7 +94,8 @@ exports.getHistory = async (req, res) => {
 exports.deleteFromHistory = async (req, res) => {
     try {
         const { id } = req.params;
-        const deletedItem = await History.findByIdAndDelete(id);
+        const userId = req.user.id;
+        const deletedItem = await History.findOneAndDelete({ _id: id, userId: userId });
 
         if (!deletedItem) {
             return res.status(404).json({ success: false, message: "Produit non trouvé" });
@@ -126,6 +133,42 @@ exports.getHistoryByBarcode = async (req, res) => {
             res.status(404).json({ success: false, message: "Produit non trouvé en base" });
         }
     } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.getFavorites = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const favorites = await History.find({ userId: userId, favorite: true })
+            .sort({ last_updated: -1 });
+        res.status(200).json(favorites);
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+
+exports.toggleFavorite = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id; //
+
+        const historyItem = await History.findOne({ _id: id, userId: userId });
+
+        if (!historyItem) {
+            return res.status(404).json({ message: "Produit non trouvé" });
+        }
+
+        historyItem.favorite = !historyItem.favorite;
+        await historyItem.save();
+
+        res.status(200).json({
+            success: true,
+            favorite: historyItem.favorite
+        });
+    } catch (error) {
+        console.error("Erreur toggleFavorite:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 };
