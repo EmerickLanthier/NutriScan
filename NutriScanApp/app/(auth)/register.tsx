@@ -68,7 +68,6 @@ export default function RegisterScreen() {
         <SafeAreaView style={styles.safeArea}>
             <StatusBar barStyle="dark-content" />
 
-            {}
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -111,7 +110,6 @@ export default function RegisterScreen() {
                                 onChangeText={setEmail}
                             />
 
-                            {}
                             <View style={styles.passwordContainer}>
                                 <TextInput
                                     style={styles.passwordInput}
@@ -134,7 +132,6 @@ export default function RegisterScreen() {
                                 </TouchableOpacity>
                             </View>
 
-                            {}
                             <Text style={[styles.capsWarningText, { opacity: isCapsOn ? 1 : 0 }]}>
                                 ⚠️ Majuscules activées
                             </Text>
@@ -146,7 +143,8 @@ export default function RegisterScreen() {
 
                         <View style={styles.footerContainer}>
                             <Text style={styles.footerText}>Déjà un compte ? </Text>
-                            <TouchableOpacity onPress={() => router.push('/(auth)/connexion')}>
+                            {/* --- CORRECTION ICI : replace au lieu de push --- */}
+                            <TouchableOpacity onPress={() => router.replace('/(auth)/connexion')}>
                                 <Text style={styles.loginText}>Se connecter</Text>
                             </TouchableOpacity>
                         </View>
