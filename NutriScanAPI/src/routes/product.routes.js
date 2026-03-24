@@ -15,4 +15,5 @@ router.post('/update', auth, productController.updateHistory)
 
 router.post('/history/:id/favorite', auth, productController.toggleFavorite);
 
+router.get('/favorites', auth, productController.getFavorites);
 module.exports = router;

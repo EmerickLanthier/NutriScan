@@ -39,30 +39,6 @@ exports.handleScan = async (req, res) => {
 };
 
 
-exports.toggleFavorite = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const userId = req.user.id; //
-
-        const historyItem = await History.findOne({ _id: id, userId: userId });
-
-        if (!historyItem) {
-            return res.status(404).json({ message: "Produit non trouvé" });
-        }
-
-        historyItem.favorite = !historyItem.favorite;
-        await historyItem.save();
-
-        res.status(200).json({
-            success: true,
-            favorite: historyItem.favorite
-        });
-    } catch (error) {
-        console.error("Erreur toggleFavorite:", error.message);
-        res.status(500).json({ success: false, error: error.message });
-    }
-};
-
 exports.updateHistory = async (req, res) => {
     try {
         const productData = req.body;
@@ -157,6 +133,42 @@ exports.getHistoryByBarcode = async (req, res) => {
             res.status(404).json({ success: false, message: "Produit non trouvé en base" });
         }
     } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.getFavorites = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const favorites = await History.find({ userId: userId, favorite: true })
+            .sort({ last_updated: -1 });
+        res.status(200).json(favorites);
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+
+exports.toggleFavorite = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id; //
+
+        const historyItem = await History.findOne({ _id: id, userId: userId });
+
+        if (!historyItem) {
+            return res.status(404).json({ message: "Produit non trouvé" });
+        }
+
+        historyItem.favorite = !historyItem.favorite;
+        await historyItem.save();
+
+        res.status(200).json({
+            success: true,
+            favorite: historyItem.favorite
+        });
+    } catch (error) {
+        console.error("Erreur toggleFavorite:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 };
