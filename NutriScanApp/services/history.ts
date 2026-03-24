@@ -115,3 +115,17 @@ export const getFullProductDetails = async (barcode: string): Promise<ProductDat
 
     return product;
 };
+
+export const getFavoritesData = async () => {
+    try {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/product/favorites`, { headers });
+
+        if (!response.ok) throw new Error("Erreur lors de la récupération des favoris");
+
+        return await response.json();
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+};
