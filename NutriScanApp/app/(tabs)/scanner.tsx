@@ -105,7 +105,7 @@ export default function ScannerScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#121212',
+        backgroundColor: '#444424',
         justifyContent: 'center',
         alignItems: 'center'
     },
