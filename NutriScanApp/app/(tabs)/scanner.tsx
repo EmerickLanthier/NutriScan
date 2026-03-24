@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Camera, CameraView, BarcodeScanningResult } from 'expo-camera';
 import { fetchProduct, ProductData } from '@/services/openFoodFacts';
-import ProductDetailModal from '@/components/ProductDetailModal'; //pour la modale
+import ProductDetailModal from '@/components/ProductDetailModal';
 import { useIsFocused } from '@react-navigation/native';
-import {addToHistory} from "@/services/history";
+import { addToHistory } from "@/services/history";
 
 export default function ScannerScreen() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -34,7 +34,6 @@ export default function ScannerScreen() {
             if (product) {
                 setScannedProduct(product);
                 setModalVisible(true);
-
                 await addToHistory(product);
             } else {
                 Alert.alert("Introuvable", "Produit non trouvé sur OpenFoodFacts", [
@@ -63,7 +62,7 @@ export default function ScannerScreen() {
     };
 
     if (hasPermission === null) return <View style={styles.container} />;
-    if (hasPermission === false) return <Text>Pas d'accès à la caméra</Text>;
+    if (hasPermission === false) return <Text style={styles.errorText}>Pas d'accès à la caméra</Text>;
 
     if (!isFocused) {
         return <View style={styles.container} />;
@@ -71,26 +70,28 @@ export default function ScannerScreen() {
 
     return (
         <View style={styles.container}>
-            {!modalVisible && (
-                <CameraView
-                    style={StyleSheet.absoluteFillObject}
-                    onBarcodeScanned={handleBarCodeScanned}
-                />
-            )}
+            <Text style={styles.title}>Scanner un produit</Text>
 
-            {isLoading && (
-                <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="large" color="#fff" />
-                    <Text style={styles.loadingText}>Analyse...</Text>
-                </View>
-            )}
+            {/* Le conteneur qui limite la taille de la caméra */}
+            <View style={styles.cameraWrapper}>
+                {!modalVisible && (
+                    <CameraView
+                        style={styles.camera}
+                        onBarcodeScanned={handleBarCodeScanned}
+                    />
+                )}
 
-            {!modalVisible && !isLoading && (
-                <View style={styles.overlayUI}>
-                    <View style={styles.scanFrame} />
-                    <Text style={styles.instructionText}>Visez un code-barres</Text>
-                </View>
-            )}
+                {isLoading && (
+                    <View style={styles.loadingOverlay}>
+                        <ActivityIndicator size="large" color="#4CAF50" />
+                        <Text style={styles.loadingText}>Analyse...</Text>
+                    </View>
+                )}
+            </View>
+
+            <Text style={styles.instructionText}>
+                Alignez le code-barres dans le cadre ci-dessus
+            </Text>
 
             <ProductDetailModal
                 visible={modalVisible}
@@ -102,34 +103,56 @@ export default function ScannerScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#000' },
+    container: {
+        flex: 1,
+        backgroundColor: '#444424',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    title: {
+        color: 'white',
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 40,
+    },
+    cameraWrapper: {
+        width: 280,
+        height: 280,
+        borderRadius: 20,
+        overflow: 'hidden',
+        borderWidth: 3,
+        borderColor: '#4CAF50',
+        position: 'relative',
+        backgroundColor: '#000',
+    },
+    camera: {
+        flex: 1,
+    },
     loadingOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.8)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 20
     },
-    loadingText: { color: 'white', marginTop: 10, fontWeight: 'bold' },
-    overlayUI: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 10
-    },
-    scanFrame: {
-        width: 250,
-        height: 250,
-        borderWidth: 2,
-        borderColor: 'white',
-        borderRadius: 20
+    loadingText: {
+        color: 'white',
+        marginTop: 10,
+        fontWeight: 'bold',
+        fontSize: 16
     },
     instructionText: {
-        color: 'white',
-        fontSize: 16,
-        marginTop: 20,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        padding: 10,
-        borderRadius: 5
+        color: '#ccc',
+        fontSize: 15,
+        marginTop: 40,
+        textAlign: 'center',
+        paddingHorizontal: 20,
     },
+    errorText: {
+        flex: 1,
+        color: 'white',
+        backgroundColor: '#000',
+        textAlign: 'center',
+        textAlignVertical: 'center'
+    }
 });

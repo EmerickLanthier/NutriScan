@@ -22,7 +22,7 @@ export const addToHistory = async (product: ProductData) => {
         });
         return await response.json();
     } catch (error) {
-        console.error("Erreur backend:", error);
+        console.error("Erreur backend ajout historique:", error);
     }
 }
 

@@ -11,22 +11,22 @@ exports.handleScan = async (req, res) => {
         const userId = req.user.id;
 
         await Product.findOneAndUpdate(
-            { barcode: productData.barcode },
-            { $set: { ...productData, last_updated: Date.now() } },
-            { upsert: true, returnDocument: `after` }
+            {barcode: productData.barcode},
+            {$set: {...productData, last_updated: Date.now}},
+            {upsert: true, returnDocument: `after`}
         );
 
 
         await History.findOneAndUpdate(
-            { barcode: productData.barcode, userId: userId },
+            {barcode: productData.barcode, userId: userId},
             {
                 $set: {
                     ...productData,
                     userId: userId,
-                    last_updated: Date.now()
+                    last_updated: Date.now
                 }
             },
-            { upsert: true,  returnDocument: `after` }
+            {upsert: true, returnDocument: `after`}
         );
 
         res.status(201).json({
@@ -34,7 +34,7 @@ exports.handleScan = async (req, res) => {
             message: "Produit mis à jour dans l'historique"
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 };
 
@@ -44,13 +44,13 @@ exports.updateHistory = async (req, res) => {
         const productData = req.body;
 
         await History.findOneAndUpdate(
-            { barcode: productData.barcode },
+            {barcode: productData.barcode},
             {
                 $set: {
                     ...productData, last_updated: Date.now()
                 }
             },
-            { upsert: true, returnDocument: 'after' }
+            {upsert: true, returnDocument: 'after'}
         );
 
         res.status(201).json({
@@ -58,106 +58,106 @@ exports.updateHistory = async (req, res) => {
             message: "Produit mis à jour dans l'historique"
         });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 };
 
 exports.getHistory = async (req, res) => {
     try {
-        const { sortBy, order, search } = req.query;
+        const {sortBy, order, search} = req.query;
         const userId = req.user.id;
 
-        let sortQuery = { last_updated: -1 };
+        let sortQuery = {last_updated: -1};
         let filterQuery = {userId: userId};
 
         if (sortBy) {
             const sortDirection = order === 'asc' ? 1 : -1;
 
             if (sortBy === 'nutriscore') {
-                sortQuery = { nutriscore: sortDirection };
+                sortQuery = {nutriscore: sortDirection};
             } else if (sortBy === 'last_updated') {
-                sortQuery = { last_updated: sortDirection };
+                sortQuery = {last_updated: sortDirection};
             }
         }
 
         if (search) {
-            filterQuery.name = { $regex: search, $options: 'i' };
+            filterQuery.name = {$regex: search, $options: 'i'};
         }
 
         const history = await History.find(filterQuery).sort(sortQuery);
         res.status(200).json(history);
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 };
 
 exports.deleteFromHistory = async (req, res) => {
     try {
-        const { id } = req.params;
+        const {id} = req.params;
         const userId = req.user.id;
-        const deletedItem = await History.findOneAndDelete({ _id: id, userId: userId });
+        const deletedItem = await History.findOneAndDelete({_id: id, userId: userId});
 
         if (!deletedItem) {
-            return res.status(404).json({ success: false, message: "Produit non trouvé" });
+            return res.status(404).json({success: false, message: "Produit non trouvé"});
         }
 
-        res.status(200).json({ success: true, message: "Produit supprimé de l'historique" });
+        res.status(200).json({success: true, message: "Produit supprimé de l'historique"});
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 };
 
 exports.getProductByBarcode = async (req, res) => {
     try {
-        const { barcode } = req.params;
-        const product = await Product.findOne({ barcode: barcode });
+        const {barcode} = req.params;
+        const product = await Product.findOne({barcode: barcode});
 
         if (product) {
             res.status(200).json(product);
         } else {
-            res.status(404).json({ success: false, message: "Produit non trouvé en base" });
+            res.status(404).json({success: false, message: "Produit non trouvé en base"});
         }
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 };
 
 exports.getHistoryByBarcode = async (req, res) => {
     try {
-        const { barcode } = req.params;
-        const history = await History.findOne({ barcode: barcode });
+        const {barcode} = req.params;
+        const history = await History.findOne({barcode: barcode});
 
         if (history) {
             res.status(200).json(history);
         } else {
-            res.status(404).json({ success: false, message: "Produit non trouvé en base" });
+            res.status(404).json({success: false, message: "Produit non trouvé en base"});
         }
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 };
 
 exports.getFavorites = async (req, res) => {
     try {
         const userId = req.user.id;
-        const favorites = await History.find({ userId: userId, favorite: true })
-            .sort({ last_updated: -1 });
+        const favorites = await History.find({userId: userId, favorite: true})
+            .sort({last_updated: -1});
         res.status(200).json(favorites);
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 };
 
 
 exports.toggleFavorite = async (req, res) => {
     try {
-        const { id } = req.params;
+        const {id} = req.params;
         const userId = req.user.id; //
 
-        const historyItem = await History.findOne({ _id: id, userId: userId });
+        const historyItem = await History.findOne({_id: id, userId: userId});
 
         if (!historyItem) {
-            return res.status(404).json({ message: "Produit non trouvé" });
+            return res.status(404).json({message: "Produit non trouvé"});
         }
 
         historyItem.favorite = !historyItem.favorite;
@@ -169,6 +169,6 @@ exports.toggleFavorite = async (req, res) => {
         });
     } catch (error) {
         console.error("Erreur toggleFavorite:", error.message);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 };

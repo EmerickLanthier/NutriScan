@@ -4,7 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const productRoutes = require('./routes/product.routes');
-const authRoutes = require('../src/routes/authRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -15,6 +15,7 @@ app.use(express.json());
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connecté à MongoDB Atlas (nutriscan_db)'))
     .catch((err) => console.error('Erreur de connexion MongoDB:', err));
+
 
 app.use('/api/product', productRoutes);
 app.use('/api/auth', authRoutes);

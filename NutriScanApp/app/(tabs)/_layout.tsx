@@ -32,6 +32,7 @@ export default function TabLayout() {
                 name="index"
                 options={{
                     title: 'Accueil',
+                    animation: `shift`,
                     tabBarIcon: ({ color }) => <NavigationIcons size={28} name="icons8-home" color={color} />,
                 }}
             />
@@ -39,12 +40,14 @@ export default function TabLayout() {
                 name="scanner"
                 options={{
                     title: 'Scanneur',
+                    animation: `none`,
                     tabBarIcon: ({ color }) => <NavigationIcons size={28} name="barcode_1550324" color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="history"
                 options={{
+                    animation: `shift`,
                     title: 'Historique',
                     tabBarIcon: ({ color }) => <NavigationIcons size={28} name="arrow_13371679" color={color} />,
                 }}
@@ -53,6 +56,7 @@ export default function TabLayout() {
                 name="account"
                 options={{
                     title: 'Profil',
+                    animation: `shift`,
                     tabBarIcon: ({ color }) => <NavigationIcons size={28} name="codicon--account" color={color} />,
                 }}
             />
