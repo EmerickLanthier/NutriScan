@@ -42,16 +42,24 @@ exports.handleScan = async (req, res) => {
 exports.toggleFavorite = async (req, res) => {
     try {
         const { id } = req.params;
-        const historyItem = await History.findOne({ _id: id, userId: req.user.id });
+        const userId = req.user.id; //
 
-        if (!historyItem) return res.status(404).json({ message: "Non trouvé" });
+        const historyItem = await History.findOne({ _id: id, userId: userId });
+
+        if (!historyItem) {
+            return res.status(404).json({ message: "Produit non trouvé" });
+        }
 
         historyItem.favorite = !historyItem.favorite;
         await historyItem.save();
 
-        res.status(200).json({ favorite: historyItem.favorite });
+        res.status(200).json({
+            success: true,
+            favorite: historyItem.favorite
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Erreur toggleFavorite:", error.message);
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 

@@ -13,4 +13,6 @@ router.get('/details/:barcode', auth, productController.getProductByBarcode);
 
 router.post('/update', auth, productController.updateHistory)
 
+router.post('/history/:id/favorite', auth, productController.toggleFavorite);
+
 module.exports = router;
