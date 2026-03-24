@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
 const historySchema = new mongoose.Schema({
-   //-----TODO : "Link" le userid avec le produit scanné pour que chaque personne ai un historique personnel
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: false //----TODO: Ne pas oublier de changer à true après l'implémentation de l'authentification
+        required: true
     },
     barcode: {
         type: String,
@@ -14,10 +13,13 @@ const historySchema = new mongoose.Schema({
     name: { type: String, required: true },
     image: { type: String },
     nutriscore: { type: String, lowercase: true },
+    favorite: { type: Boolean, default: false },
     last_updated: {
         type: Date,
         default: Date.now()
     }
 });
+
+historySchema.index({ userId: 1, barcode: 1 }, { unique: true });
 
 module.exports = mongoose.model('History', historySchema);

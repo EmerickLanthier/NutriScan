@@ -7,6 +7,7 @@ exports.handleScan = async (req, res) => {
     try {
 
         const productData = req.body;
+        const userId = req.user.id;
 
         await Product.findOneAndUpdate(
             { barcode: productData.barcode },
@@ -16,12 +17,8 @@ exports.handleScan = async (req, res) => {
 
 
         await History.findOneAndUpdate(
-            { barcode: productData.barcode },
-            {
-                $set: {
-                    ...productData, last_updated: Date.now()
-                }
-            },
+            { userId, barcode: productData.barcode },
+            { $set: { ...productData, last_updated: Date.now() } },
             { upsert: true, returnDocument: 'after' }
         );
 
