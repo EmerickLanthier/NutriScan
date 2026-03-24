@@ -81,9 +81,10 @@ exports.updateHistory = async (req, res) => {
 exports.getHistory = async (req, res) => {
     try {
         const { sortBy, order, search } = req.query;
+        const userId = req.user.id;
 
         let sortQuery = { last_updated: -1 };
-        let filterQuery = {};
+        let filterQuery = {userId: userId};
 
         if (sortBy) {
             const sortDirection = order === 'asc' ? 1 : -1;
@@ -109,7 +110,8 @@ exports.getHistory = async (req, res) => {
 exports.deleteFromHistory = async (req, res) => {
     try {
         const { id } = req.params;
-        const deletedItem = await History.findByIdAndDelete(id);
+        const userId = req.user.id;
+        const deletedItem = await History.findOneAndDelete({ _id: id, userId: userId });
 
         if (!deletedItem) {
             return res.status(404).json({ success: false, message: "Produit non trouvé" });
