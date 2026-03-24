@@ -72,7 +72,7 @@ function HomeContent() {
                     </View>
 
                     <View style={styles.textContainer}>
-                        <Text style={styles.titleText}>Mangez mieux, vivez mieux</Text>
+                        <Text style={styles.titleText}>Scanner pour mieux manger</Text>
                         <View style={styles.divider} />
                         <Text style={styles.bodyText}>
                             NutriScan vous aide à décoder les étiquettes alimentaires en un clin d'œil.
