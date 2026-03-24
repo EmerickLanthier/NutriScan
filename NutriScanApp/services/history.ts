@@ -1,7 +1,16 @@
 import { fetchProduct, ProductData } from './openFoodFacts';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const API_URL_SCAN = `${process.env.EXPO_PUBLIC_API_URL}/product/scan`
 export const API_URL_HISTORY = `${process.env.EXPO_PUBLIC_API_URL}/product/history`
+
+const getAuthHeaders = async () => {
+    const token = await AsyncStorage.getItem('userToken');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+};
 
 export const addToHistory = async (product: ProductData) => {
     try {
@@ -41,6 +50,7 @@ export const getHistoryData = async (
     search: string = ''
 ) => {
     try {
+        const headers = await getAuthHeaders();
         let url = API_URL_HISTORY;
 
         if (sortBy) {
@@ -54,7 +64,7 @@ export const getHistoryData = async (
         if (url.endsWith('&') || url.endsWith('?')) {
             url = url.slice(0, -1);
         }
-        const response = await fetch(url);
+        const response = await fetch(url, { headers });
 
         if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status}`);
@@ -65,6 +75,15 @@ export const getHistoryData = async (
         console.error("Erreur réseau lors de la récupération de l'historique:", error);
         return [];
     }
+};
+
+export const toggleFavorite = async (id: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL_HISTORY}/${id}/favorite`, {
+        method: 'POST',
+        headers
+    });
+    return await response.json();
 };
 
 export const getProductFromDB = async (barcode: string): Promise<ProductData | null> => {
